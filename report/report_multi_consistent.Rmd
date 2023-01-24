@@ -1,0 +1,17 @@
+---
+title: "Multiple Integration Tool Check - Consistent entries"
+output: html_document
+params:
+  gVars: NA
+  input: NA
+  srcDir: NA
+always_allow_html: yes
+---
+
+
+```{r,eval=knitr::is_html_output(), echo=FALSE}
+
+  p <- as.data.frame(params$gVars$multi_ACmsg) %>% do.call(rbind.data.frame, .)  %>% setNames(.,"Consistent Entries")
+  knitr::kable(p , "html", escape=FALSE)
+
+```
