@@ -1,0 +1,775 @@
+---
+title: "ESPERANTO Curation Report"
+output: html_document
+params: 
+ gVars: NA
+ input: NA
+ srcDir: NA
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## R version and platform
+```{r, echo=FALSE}
+base::version
+```
+
+
+## Timestamp
+```{r, echo=FALSE}
+print(Sys.time())
+```
+
+
+## Session Unique Identifier
+```{r, echo=FALSE}
+id <- data.frame(params$gVars$sha256_stringID)
+kbl(id, format="html",booktabs = TRUE, align="c",
+                col.names = NULL, table.attr = "style = \"color: dodgerblue;\"")  %>% 
+                     kable_styling (font_size = 16, bootstrap_options = c("striped", "condensed")) %>%
+  column_spec(1, bold=TRUE)
+
+
+```
+<br>
+
+
+## Final User
+```{r, echo=FALSE}
+#cat(params$gVars$username) 
+final_user <- data.frame(params$gVars$username)
+kbl(final_user, format="html",booktabs = TRUE, align="c",
+                col.names = NULL)  %>% 
+                     kable_styling (bootstrap_options = c("condensed"))  
+```
+
+
+## All Curators  
+```{r, echo=FALSE} 
+
+curators <- data.frame(params$gVars$all_curators) %>% unique(.) 
+row.names(curators) <- 1:nrow(curators)
+kbl(curators, format="html",booktabs = TRUE, align=c("l", "c"),
+    col.names = NULL, row.names = TRUE)  %>%  
+                      kable_styling (bootstrap_options = c("striped", "condensed")) %>% column_spec(1, width = "30em")
+
+```
+<br>
+
+## Type of Documentation  
+```{r, echo=FALSE} 
+
+if (!params$input$GLP_inactivation_mode) {
+            documentation <- ("GLP Mode")
+} else {
+    documentation <- ("Only Procedure Mode")
+}
+
+kbl(documentation, format="html",booktabs = TRUE, align="c",
+                col.names = NULL)  %>% 
+                     kable_styling ()
+
+
+```
+<br>
+
+## Working mode - Type of phenodata
+```{r, echo=FALSE} 
+if (!params$gVars$working_status) {
+            working_mode <- ("Multiple datasets")
+} else {
+            working_mode <- ("Single dataset")
+}
+  
+kbl(working_mode, format="html",booktabs = TRUE, align="c",
+                col.names = NULL)  %>% 
+                     kable_styling ()
+```
+
+
+<br> 
+```{r, echo=FALSE, format="latex", results= 'asis'} 
+#it shows curated(if multiple) or not-curated (if single) dataset(s) and its/their features
+current_df_file_name <- params$gVars$current_df_file_name 
+title <- ifelse (!params$gVars$working_status, 
+                            "Characteristics of the Uploaded Multiple Curated Files", 
+                            "Characteristics of the Uploaded Original not-curated File")
+h2(title)
+
+if (!params$gVars$working_status) {   #multi
+  
+            row_col_df <- sapply(params$gVars$multidf_list, function(k) 
+                                             new <- c(nrow(k),ncol(k),nrow(k)*ncol(k))) %>% t() %>% data.frame() %>% 
+                                             cbind( current_df_file_name,.) 
+            #merged file
+            merged <- params$gVars$multidf
+            row_col_df <- rbind(row_col_df, c("Merged version", nrow(merged), ncol(merged),nrow(merged)*ncol(merged)))
+            rownames(row_col_df) <- NULL
+            kbl(row_col_df, format="html",booktabs = TRUE, align="c",
+                          col.names = c("file name", '#samples (rows)','#variables (columns)', '#Total Fields'), 
+                          caption = "<center><strong>Loaded Dataset Features</strong></center>")  %>% 
+                                kable_styling (bootstrap_options = c("striped", "condensed"))  %>% 
+                                row_spec(nrow(row_col_df),bold=TRUE,color = "white", background = "dodgerblue")
+           
+} else { 
+    original_phTable <- params$gVars$original_phTable[[1]]
+    nrow_original_table <- nrow(original_phTable)
+    ncol_original_table <- ncol(original_phTable)
+    total_fields_orig <- nrow_original_table*ncol_original_table
+  
+    row_col_df <- data.frame(current_df_file_name, nrow_original_table, ncol_original_table, total_fields_orig)
+    rownames(row_col_df) <- NULL
+    kbl(row_col_df, format="html",booktabs = TRUE, align="c",
+                col.names = c("file name", '#samples (rows)','#variables (columns)', "Total Fields"), 
+                caption = "<center><strong>Loaded Dataset Features</strong></center>")  %>% 
+                      kable_styling (bootstrap_options = c("striped", "condensed")) 
+}
+
+
+```
+
+
+```{r, integration_curation_analysis, echo=FALSE, results='asis'}
+
+title_curation_results <- ifelse (!params$gVars$working_status, 
+                                "Multiple Dataset Integration Analysis", 
+                                "Single Dataset Curation Results")
+if ( params$gVars$working_status ){  #single case
+    cat("<br>")
+    h2(title_curation_results)
+}
+
+
+
+#Curation results for both single and multiple dataset(s). There are slighly changes in the report
+if ( !params$gVars$working_status ) {  #multi  
+  issue_cols <- length(params$gVars$multi_issue_colnames)
+  consistent_cols <- length(params$gVars$multi_accept_colnames)
+  total_processed_cols <- issue_cols + consistent_cols
+  analysis_cols <- data.frame(Type=c("Issue","Consistent", "Processed Total"), 
+                              cols= c(issue_cols, consistent_cols,  total_processed_cols)) %>% data.table(.)
+  full_file_analysis_cols <- kbl(analysis_cols, format="html",booktabs = TRUE, align="c",
+                                        col.names = c("Classification Type",'#processed columns'), 
+                                        caption = "<center><strong>Full File Analysis</strong></center>")  %>% 
+                                              kable_styling (bootstrap_options = c("striped", "condensed")) 
+  
+  
+  #table issue processed vs correspondent filename
+  if(!is.null(params$gVars$save_issue_blocks_list)){
+  df_issue_block_report <- rbindlist(params$gVars$save_issue_blocks_list) %>% .[,c(1,2,3,5)]
+  processed_rows <- rowsum(as.numeric(df_issue_block_report$row), as.character(df_issue_block_report$filename))  
+  processed_cols <- rowsum(as.numeric(df_issue_block_report$col), as.character(df_issue_block_report$filename)) 
+  
+    #creation of the table
+    issue_vs_file_list <- list(processed_cols, processed_rows)
+    transposed_issue_vs_file_list <- lapply(issue_vs_file_list,t)  
+    transposed_issue_vs_file_df <- lapply(transposed_issue_vs_file_list, as.data.frame)                                                                                                               
+    
+    issue_vs_file_tab<- (data.frame(t(plyr::rbind.fill(transposed_issue_vs_file_df))))  %>%
+                                                      tibble::rownames_to_column(., "file name")
+    
+   
+    issue_vs_file_kbl <- kbl(issue_vs_file_tab, format="html",booktabs = TRUE, align="c",
+                                  col.names = c("file name", '#samples (rows)','#variables (columns)'), 
+                                  caption = "<center><strong>Issues per Single File</strong></center>")  %>% 
+                                        kable_styling (bootstrap_options = c("striped", "condensed")) 
+  } else   { #issue_vs_file_kbl <- "No entries listed as issue" 
+    
+          issue_vs_file_tab <- data.frame("Regardless of each file name, no entries are listed as issue")
+          issue_vs_file_kbl <- kbl(issue_vs_file_tab, format="html",booktabs = TRUE, align="c",
+                                col.names = NULL, caption = "<center><strong>Issues per Single File</strong></center>") %>% 
+                                     kable_styling (bootstrap_options = c("striped", "condensed")) 
+                  
+  
+   
+    }
+  multi_integration_analysis_list_tables <- list(full_file_analysis_cols, "<br>",  issue_vs_file_kbl,"<br>")
+
+} else { 
+  curated_phTable <- params$gVars$phTable[[1]]
+    nrow_curated_table <- nrow(curated_phTable)
+    ncol_curated_table <- ncol(curated_phTable)
+    total_fields_curated <- nrow_curated_table*ncol_curated_table
+  
+    row_col_df_curated <- data.frame(current_df_file_name, nrow_curated_table, ncol_curated_table, total_fields_curated)
+    rownames(row_col_df_curated) <- NULL
+    kbl(row_col_df_curated, format="html",booktabs = TRUE, align="c",
+                col.names = c("file name", '#samples (rows)','#variables (columns)', "Total Fields"), 
+                caption = "<center><strong>Curated Dataset Features</strong></center>")  %>% 
+                      kable_styling (bootstrap_options = c("striped", "condensed")) 
+  
+    relab_ac <- length(grep("relab_AC",names(params$gVars$relab_op_list)))
+    relab_rj <- length(grep("relab_RJ",names(params$gVars$relab_op_list)))
+    
+    dupl <- length(params$gVars$dupl_op_list)
+    removed_colnames <- lapply(params$gVars$dupl_op_list, function(inner_elem) {
+      kept <- as.character(inner_elem[[1]])
+      all_selected <- as.character(inner_elem[[2]])
+      removed <- all_selected[!all_selected %in% kept] 
+      removed
+    }) %>% unlist(.)
+    deleted_cols_with_dupl <- length(removed_colnames)
+    
+    simplydeleted <- length(params$gVars$delete_op_list)
+    all_deleted <- deleted_cols_with_dupl + simplydeleted
+    
+    recode_ac <-  nrow(params$gVars$recod_ops_dataframe  )       
+    if(is.null(recode_ac)) {recode_ac <-0}   
+    recode_rj <-  length(params$gVars$recodeRJ_op_list)    #3
+    
+    special_add_empty <- length(grep("special_addEMPTY",names(params$gVars$special_op_list))) 
+    special_agi_splt <- length(grep("special_agiSPL",names(params$gVars$special_op_list))) 
+    special_other_splt <- length(grep("special_SPL",names(params$gVars$special_op_list))) 
+    special_regex_splt <- length(grep("special_SPLREG",names(params$gVars$special_op_list))) 
+    specials <- special_add_empty + special_agi_splt + special_other_splt + special_regex_splt
+    total_ops <- relab_ac + relab_rj + dupl + simplydeleted + recode_ac + recode_rj + specials
+    
+    # table creation regarding all ops
+    all_ops_table <- data.frame(Type=c("Accepted Suggested Relabelling","Rejected Suggested Relabelling", 
+                                         "Duplicate Removal",
+                                         "Deletion",
+                                         "Recoding Full Column", "Skipped Full Column Recoding", "Specials", "Total"), 
+                                ops= c(relab_ac, relab_rj,  dupl, simplydeleted, recode_ac, recode_rj, specials, total_ops)) %>% 
+                                        data.table(.)
+    rownames(all_ops_table) <- NULL
+    all_ops_kbl <- kbl(data.frame(all_ops_table), format="html",booktabs = TRUE, align="c",
+                  col.names = c("Type of Operation", '#operation(s)'), 
+                  caption = "<center><strong>Synthesis of the Operations Performed to Curate the Dataset</strong></center>")  %>% 
+                        kable_styling (bootstrap_options = c("striped", "condensed")) %>% 
+                        row_spec(nrow(all_ops_table),bold=TRUE,color = "white", background = "dodgerblue") 
+    
+    #regarding how columns were deleted
+    howdeleted <- data.frame(Cause=c("Duplicate Removal","Direct Deletion", "Total"), 
+                              cols= c(deleted_cols_with_dupl, simplydeleted,  all_deleted)) %>% data.table(.)
+    howdeleted_kbl <- kbl(howdeleted, format="html",booktabs = TRUE, align="c",
+                                        col.names = c("Cause",'#deleted columns'), 
+                                        caption = "<center><strong>Column Deletion vs Type of Operation</strong></center>")  %>% 
+                                              kable_styling (bootstrap_options = c("striped", "condensed")) %>% 
+                                              row_spec(nrow(howdeleted),bold=TRUE,color = "white", background = "dodgerblue") 
+  
+    #regarding special ops
+    all_spec_type_ops <- c(special_add_empty, special_agi_splt, special_other_splt, special_regex_splt)
+  
+    if (any( all_spec_type_ops !=0))  {
+    #calculates the added columns for each special action 
+    new_add_empty <- purrr::map(params$gVars$special_op_list [ grep("special_addEMPTY",names(params$gVars$special_op_list))] ,1) %>%
+                      unlist(.) %>% length(.)
+    new_other_splt <- purrr::map(params$gVars$special_op_list [ grep("special_SPL",names(params$gVars$special_op_list))] ,2) %>%
+                      unlist(.) %>% length(.)
+    new_regex_splt <- purrr::map(params$gVars$special_op_list [ grep("special_SPLREG",names(params$gVars$special_op_list))] ,2) %>%
+                      unlist(.) %>% length(.)
+    new_agi_splt <- 3* length( purrr::map(params$gVars$special_op_list [ grep("special_agiSPL",names(params$gVars$special_op_list))] ,1) )
+    newly_originated_cols <- c(new_add_empty,new_agi_splt, new_other_splt, new_regex_splt )  
+      
+    insight_specials_table <- data.frame(Type=c("Addition of Empty Columns","Agilent String Splitting", 
+                                    "Character Splitting",  "Regular Expression Splitting"), 
+                              cols= c(special_add_empty, special_agi_splt,  
+                                      special_other_splt, special_regex_splt),
+                              added_cols = newly_originated_cols) %>% data.table(.)  
+    insight_specials_kbl <- kbl(insight_specials_table, format="html",booktabs = TRUE, align="c",
+                                        col.names = c("Special Operation Type",'#Operation(s)',"#Newly Originated Columns"), 
+                                        caption = "<center><strong>Details on Special Operation(s)</strong></center>")  %>% 
+                                              kable_styling (bootstrap_options = c("striped", "condensed")) 
+
+    }  else { insight_specials_kbl <- ""}
+    
+  
+
+  single_curation_analysis_list_tables <- list(all_ops_kbl) 
+   
+}
+
+```
+
+
+```{r, tables_integration_curation_analysis1SINGLE, echo = FALSE, results='asis'}
+#print tables calculated in  previous block integration_curation_analysis" - such as the curation results or the integration analysis of multiple datasets)
+if ( params$gVars$working_status ) {  #single 
+    for (table in single_curation_analysis_list_tables)  {
+    cat(table)
+    } 
+}
+
+
+```
+
+```{r,tables_integration_curation_analysis2, echo = FALSE, results='asis'} 
+# still to print the tables of the analysis/curation (only tables for single file curation)  - how columns wee deleted
+
+if ( params$gVars$working_status ) {  #single
+  if (all_deleted != 0){
+    cat("<br>")
+    print(h4("Insights on perfomed operations - Type of deletions"))
+    cat( howdeleted_kbl)
+  }
+}
+ 
+                                               
+
+```
+
+```{r,tables_integration_curation_analysis3, echo = FALSE, results='asis'} 
+# still to print the tables of the analysis/curation (only tables for single file curation) - special ops
+
+if ( params$gVars$working_status)  {  #single
+  if(insight_specials_kbl != "" ){
+      cat("<br>")
+      print(h4("Insights on perfomed operations - Special operations"))
+      cat("<br>", insight_specials_kbl)
+      }
+}
+ 
+
+```
+<br>
+
+```{r, curated_dset_features, echo = FALSE, results='asis' }
+
+if (params$gVars$working_status) {   #single
+    print(h2("Characteristics of the Curated Input File"))
+    curr_phTable <- params$gVars$phTable[[1]]
+    nrow_curr_table <- nrow(curr_phTable)
+    ncol_curr_table <- ncol(curr_phTable)
+    total_fields_curr <- nrow_curr_table*ncol_curr_table
+  
+    row_col_df_curr <- data.frame(paste0("curated_",current_df_file_name), nrow_curr_table, ncol_curr_table, total_fields_curr)
+    rownames(row_col_df_curr) <- NULL
+    kbl(row_col_df_curr, format="html",booktabs = TRUE, align="c",
+                col.names = c("file name", '#samples (rows)','#variables (columns)', "Total Fields"), 
+                caption = "<center><strong>Curated Dataset Features</strong></center>")  %>% 
+                      kable_styling (bootstrap_options = c("striped", "condensed")) 
+}
+
+
+```
+<br>
+
+## Loaded Vocabulary 
+```{r, vocabulary_file_name, echo = FALSE, results='asis'}
+current_dict_file_name <- params$gVars$current_dict_file_name 
+dict_name_string <- paste0("Vocabulary File Name: ","<br/>", tags$b(current_dict_file_name) )
+cat(dict_name_string)
+```
+
+## Original Vocabulary Features
+```{r,vocabulary features, echo = FALSE, results='asis'}
+
+orig_dict <- params$gVars$original_dkeys %>% separate_rows(., allowed_features, sep=",")  %>% separate_rows(., syn_features, sep="\\|")
+label_names <- unique(orig_dict$label)
+labels <- length(label_names)
+orig_num_entries<-   lapply(label_names, function(single_label) {
+                        subset_vocL <- orig_dict[orig_dict$label %in% single_label ,] %>% separate_rows(., lab_syn, sep=",") 
+                        tmp_num_synsL <- unique(subset_vocL$lab_syn) %>% na.omit(.) %>% length(.)
+                        tmp_num_cont <- unique(subset_vocL$allowed_features) %>% na.omit(.) %>% length(.)
+                      tmp_num_synsC <- unique(subset_vocL$syn_features) %>% na.omit(.) %>% length(.)
+                        tmp_num_entries <-list(tmp_num_synsL, tmp_num_cont, tmp_num_synsC)
+                        
+    }) %>% rbindlist(.) %>% colSums(.) 
+
+syn_lab <- as.integer(orig_num_entries[1])
+content <- as.integer(orig_num_entries[2])
+syn_cont <- as.integer(orig_num_entries[3])
+total_entries <- labels + syn_lab + content + syn_cont
+
+#remove filler row if it is the starting vocabulary, and correct the number of entries
+filler <- rep("*fillertoremove*",	4)
+test <- which(colSums(t(orig_dict) == filler) == ncol(orig_dict))
+if (!is_empty(test)){
+labels <- labels -1
+syn_lab <- syn_lab -1
+content <- content -1
+syn_cont <- syn_cont -1
+total_entries <- labels + syn_lab + content + syn_cont
+}
+
+  
+#creates table with 
+voc_features_cols <- data.frame(Type=c("Labels","Label Synonyms", "Contents","Content Synonyms", "Total Entries"), 
+                              cols= c(labels, syn_lab, content, syn_cont, total_entries)) %>% data.table(.)
+full_overview_voc_features <- kbl(voc_features_cols, format="html",booktabs = TRUE, align="c",
+                                        col.names = c("Entry Type",'#Entries'), 
+                                        caption = "<center><strong>Overview of Original Vocabulary Features</strong></center>")  %>% 
+                                              kable_styling (bootstrap_options = c("striped", "condensed"))   %>% 
+                                              row_spec(nrow(voc_features_cols),bold=TRUE,color = "white", background = "dodgerblue")
+cat(full_overview_voc_features)
+ 
+```
+
+
+```{r, new_entries_candidate, echo=FALSE, results='asis', eval=FALSE}
+
+if (!is.null(params$gVars$potential_new_entries_report) && nrow(params$gVars$potential_new_entries_report)>0) { 
+
+    candidates_for_voc <- params$gVars$potential_new_entries_report[,c(3,4,6,7)] %>%  setNames(., c("mainL","newL","mainC","newC"))
+   # candidates_for_voc <- params$gVars$later_voc_upd_df[,c(2,3,5,6)] 
+    dict <- params$gVars$inputGx[[1]]   #starting vocabulary
+    old_dict_label <- unique(dict$label)
+    all_candidate_labels <- unique(candidates_for_voc$mainL)
+    
+    for (label in all_candidate_labels){  
+                            if(label %in% old_dict_label){
+                              subset_oldVOC <- dict[dict$label %in% label ,]
+                              candidates_for_voc <- candidates_for_voc %>% 
+                                                        mutate(newL = ifelse(!mainL %in% label, newL, 
+                                                                             ifelse( newL %in% subset_oldVOC$lab_syn, NA, newL)),
+                                                               mainC = ifelse(!mainL %in% label, mainC, 
+                                                                             ifelse( mainC %in% subset_oldVOC$allowed_features, NA, mainC)), 
+                                                               newC = ifelse(!mainL %in% label, newC, 
+                                                                             ifelse( newC %in% subset_oldVOC$syn_features, NA, newC)),
+                                                               mainL = ifelse(!mainL %in% label, mainL, 
+                                                                             ifelse( mainL %in% subset_oldVOC$label, NA, mainL))
+                                                          )
+                            }
+    }
+   
+    sums_of_new_entries <- colSums(!is.na(candidates_for_voc)) %>% t(.) %>% data.frame()
+    total_new_entries <- sum(sums_of_new_entries)
+    new_labels <- sums_of_new_entries$mainL
+    new_cont <- sums_of_new_entries$mainC
+    new_synL <- sums_of_new_entries$newL
+    new_synC <- sums_of_new_entries$newC 
+    #create table about candidates for new entries in the vocabulary
+    new_entries_df <- data.frame(Type=c("Labels","Label Synonyms", "Contents","Content Synonyms", "Total Potential Entries"), 
+                                  cols= c(new_labels, new_synL,new_cont, new_synC, total_new_entries)) #%>% data.table(.)
+    new_entries_kbl <- kbl(new_entries_df, format="html",booktabs = TRUE, align=c("c","c"),
+                                            col.names = c("Entry Type",'#New Candidate Entries'), 
+                                            caption = "<center><strong>Candidates for a Potential Update of the Vocabulary</strong></center>") %>% 
+                                                  kable_styling (bootstrap_options = c("striped", "condensed"))   %>% 
+                                                  row_spec(nrow(new_entries_df),bold=TRUE,color = "white", background = "dodgerblue")
+
+    cat(new_entries_kbl)
+}  
+```
+
+
+```{r, issue_candidate, echo=FALSE, results='asis'}
+if (params$gVars$working_status) {   #single
+    if(!is_null(params$gVars$potential_new_entries_report)){
+          potential_new_entries_report <- params$gVars$potential_new_entries_report
+          total_rows <- nrow(potential_new_entries_report)
+          issue_candidate <- nrow(potential_new_entries_report[potential_new_entries_report$Decision %in% "Issue",])
+          discard_candidate <- nrow(potential_new_entries_report[potential_new_entries_report$Decision %in% "Discard",]) 
+          stored_candidate <- nrow(potential_new_entries_report[
+                                  (!is.na(potential_new_entries_report$Decision) & !potential_new_entries_report$Decision %in% c("Issue", "Discard")),])
+          not_processed_candidates <- nrow(potential_new_entries_report[is.na(potential_new_entries_report$Decision) ,])
+          
+          
+            analysis_candidate_df <- data.frame(Type=c("Issue", "Discarded", "Accepted", "Unprocessed", "Total Operations for Candidate Evaluation"), 
+                                            cols= c(issue_candidate, discard_candidate,  stored_candidate, not_processed_candidates, total_rows )) %>% data.table(.)
+            analysis_candidate_kbl <- kbl(analysis_candidate_df, format="html",booktabs = TRUE, align=c("c","c"),
+                                                  col.names = c("Classification Type",'#Operations'), 
+                                                  caption = "<center><strong>Type of Operation performed during Candidate Evaluation</strong></center>")  %>% 
+                                                        kable_styling (bootstrap_options = c("striped", "condensed")) %>% 
+                                                        row_spec(nrow(analysis_candidate_df),bold=TRUE,color = "white", background = "dodgerblue")
+            
+           cat("<br>")
+           print(h2("Evaluation of Candidates for Vocabulary Update")) 
+           cat(analysis_candidate_kbl)
+           
+    }
+ }
+```
+
+
+<br>
+```{r, updated_vocabulary_features, echo = FALSE, results='asis'}
+
+if (params$gVars$working_status) {   #single
+    upd_dict <- params$gVars$dkeys %>% separate_rows(., allowed_features, sep=",")  %>% separate_rows(., syn_features, sep="\\|")
+    upd_label_names <- unique(upd_dict$label)
+    upd_labels <- length(upd_label_names)
+    upd_num_entries<-   lapply(upd_label_names, function(single_label) {
+                            subset_vocL <- upd_dict[upd_dict$label %in% single_label ,] %>% separate_rows(., lab_syn, sep=",") 
+                            tmp_num_synsL <- unique(subset_vocL$lab_syn) %>% na.omit(.) %>% length(.)
+                            tmp_num_cont <- unique(subset_vocL$allowed_features) %>% na.omit(.) %>% length(.)
+                            tmp_num_synsC <- unique(subset_vocL$syn_features) %>% na.omit(.) %>% length(.)
+                            tmp_num_entries <-list(tmp_num_synsL, tmp_num_cont, tmp_num_synsC)
+        }) %>% rbindlist(.) %>% colSums(.)
+    
+    
+    upd_syn_lab <- as.integer(upd_num_entries[1])
+    upd_content <- as.integer(upd_num_entries[2])
+    upd_syn_cont <- as.integer(upd_num_entries[3])
+    total_entries <- upd_labels + upd_syn_lab + upd_content + upd_syn_cont
+      
+    #crea tab con i vari item  987
+    upd_voc_features_cols <- data.frame(Type=c("Labels","Label Synonyms", "Contents","Content Synonyms", "Updated Total Entries"), 
+                                  cols= c(upd_labels, upd_syn_lab, upd_content, upd_syn_cont, total_entries)) %>% data.table(.)
+    full_overview_UPD_voc_features_kbl <- kbl(upd_voc_features_cols, format="html",booktabs = TRUE, align="c",
+                                            col.names = c("Entry Type",'#Updated Entries'), 
+                                            caption = "<center><strong>Overview of the Updated Vocabulary Features</strong></center>")  %>% 
+                                                  kable_styling (bootstrap_options = c("striped", "condensed"))   %>% 
+                                                  row_spec(nrow(upd_voc_features_cols),bold=TRUE,color = "white", background = "dodgerblue")
+    
+    
+
+}
+
+
+if (params$gVars$working_status && identical(orig_dict, upd_dict )) {   #single and no updated vocabulary
+  print(h2("Updated Vocabulary Features"))
+  cat("The vocabulary has not been updated yet.")
+} 
+if (params$gVars$working_status && !identical(orig_dict, upd_dict )) { #single and  updated vocabulary
+  print(h2("Updated Vocabulary Features"))
+  cat(full_overview_UPD_voc_features_kbl)}
+
+
+```
+
+
+```{r, how_new_vocab_entries_were_evaluated_title, echo=FALSE, results='asis'}
+
+#title
+if (params$gVars$working_status){       #single case
+  cat("<br>")
+  print(h2("Insights on vocabulary updating process"))
+  text <- ""
+  if(is.null(params$gVars$potential_new_entries_report)) {
+    if(is.null(params$gVars$later_voc_upd_df)){
+      text<-"No candidate entries are stored yet for potentially updating the vocabulary."
+    }
+    if(!is.null(params$gVars$later_voc_upd_df)){
+      if(nrow(params$gVars$later_voc_upd_df)==0){
+        text<-"No candidate entry are stored yet for potentially updating the vocabulary."
+      } else {
+        text<-"The entry candidates to update the vocabulary were not yet evaluated."
+      }
+    }
+    
+  }
+  cat(text)
+}
+
+```
+
+
+
+```{r, how_new_vocab_entries_were_evaluated_table_CreationSINGLECASE, echo=FALSE,results='asis'}
+
+if (params$gVars$working_status  && !is.null(params$gVars$potential_new_entries_report)){ #single mode
+
+    for_report <- params$gVars$potential_new_entries_report
+       issue_file <- data.frame(for_report) %>% .[.$Decision %in% c("Issue"),] %>% head(.)
+       discard_file <- data.frame(for_report) %>% .[.$Decision %in% c("Discard"),] %>% head(.)
+       accepted_file <- data.frame(for_report) %>% .[.$Decision %in% c("Accepted", "Newly Accepted"),] %>% head(.)
+       arbiter <- data.frame(arbiter=for_report$Arbiter) %>% unique(.) 
+       if (nrow(arbiter)>1) {
+         arbiter <- na.omit(arbiter) #%>% data.frame(.)
+         row.names(arbiter) <- 1:nrow(arbiter) 
+       }
+       
+       arbiter_kbl <- kbl(arbiter, escape = FALSE,format="html",booktabs = TRUE, align=c("l","c"),
+                         col.names = NULL, row.names =TRUE)  %>%  
+                          kable_styling (bootstrap_options = c("striped", "condensed")) %>% column_spec(1, width = "30em")
+       
+  
+       
+       issue_kbl <- ifelse (nrow(issue_file)== 0, "", 
+                            kbl(issue_file, format="html",booktabs = TRUE, align="c",
+                                col.names = c("ID","Label Type of Storing", "Label", "Label Synonym","Content Type of Storing", "Content", "Content Synonym", 
+                                                      "Decision", "Curator", "Arbiter"), 
+                                        row.names = FALSE,
+                                        caption = "<center><strong>New entries evaluated as Issues</strong></center>")  %>% 
+                                              kable_styling (bootstrap_options = c("striped", "condensed")) %>% 
+                                              row_spec(0 ,  bold = F, extra_css = 'vertical-align: middle !important;'))
+       
+       discard_kbl <- ifelse (nrow(discard_file)== 0, "", 
+                            kbl(discard_file, format="html",booktabs = TRUE, align="c",
+                                     col.names = c("ID","Label Type of Storing", "Label", "Label Synonym","Content Type of Storing", "Content", "Content Synonym", 
+                                                      "Decision", "Curator", "Arbiter"),  
+                                       row.names = FALSE,
+                                        caption = "<center><strong>New entries evaluated as Discard</strong></center>")  %>% 
+                                              kable_styling (bootstrap_options = c("striped", "condensed")) %>% 
+                                              row_spec(0 ,  bold = F, extra_css = 'vertical-align: middle !important;'))
+       
+       accepted_kbl <- ifelse (nrow(accepted_file)== 0, "", 
+                            kbl(accepted_file, format="html",booktabs = TRUE, align="c",
+                                        col.names = c("ID","Label Type of Storing", "Label", "Label Synonym","Content Type of Storing", "Content", "Content Synonym", 
+                                                      "Decision", "Curator", "Arbiter"), 
+                                        row.names = FALSE,
+                                        caption = "<center><strong>New entries evaluated as Correct</strong></center>")  %>% 
+                                              kable_styling (bootstrap_options = c("striped", "condensed")) %>% 
+                                              row_spec(0 ,  bold = F, extra_css = 'vertical-align: middle !important;'))
+                            
+      #all tables
+       new_entries_evaluation_list_tables <- list(issue_kbl, discard_kbl, accepted_kbl)                  
+                            
+}
+
+
+```
+
+
+```{r, how_new_vocab_entries_were_evaluated_arbiter_tableSINGLEandTITLE, echo=FALSE, results='asis'}
+
+if (params$gVars$working_status){    #single
+  if(is.null(params$gVars$potential_new_entries_report)){ 
+    cat("")
+    } else {    
+      print(h2("All Arbiters"))
+      if (any(!c(issue_kbl, discard_kbl,accepted_kbl) %in% "")){ #single mode
+        cat(arbiter_kbl)
+      }   else {cat("The entry candidates to update the vocabulary were not yet evaluated.")}
+    }
+}
+```
+
+```{r, how_new_vocab_entries_were_evaluated_messageSINGLE, echo=FALSE, results='asis'}
+
+if (params$gVars$working_status && !is.null(params$gVars$potential_new_entries_report)){ #single mode
+  if(any(!c(issue_kbl, discard_kbl,accepted_kbl) %in% "")){ #single mode
+      cat("The tables shown in this section report how the entries temporarily stored during curation can be evaluated (as Issue, to Discard or to Accept). Each table shows the first 6 entries allocated in that category. If the table is absent, there were no entries.     
+    In 'Label Type of Storing', the number describe if the original label was classified as synonym of the edited label (1), or it was not stored (2).     
+    In 'Content Type of Storing', the number describe if the original label was classified as synonym of the edited label (3), or it was not stored (4).      
+    The 'accepted entries' can be indicated as 'Accepted' or 'Newly Accepted' in 'Decision' column. In the former case, they are already present in the vocabulary, in the latter, they are added for the first time.      
+    The complete tables can be downloaded as separate excel files.")
+  }
+}
+
+```
+
+```{r, how_new_vocab_entries_were_evaluated_classification_tablesSINGLE, echo=FALSE, results='asis'}
+
+if (params$gVars$working_status && !is.null(params$gVars$potential_new_entries_report)){ #single mode
+    for (table in new_entries_evaluation_list_tables)  {
+      if (table != ""){
+      cat(table)
+        cat("<br>")
+    } 
+}
+}
+
+
+```
+
+
+
+```{r, integration_evaluationMULTI_arbiter, echo=FALSE, results='asis'}
+
+if (!params$gVars$working_status){ #multiple 
+  arbiterISS <- arbiterAC <- NA
+  if (length(params$gVars$multi_ISSmsg)>0){
+      arbiterISS <- purrr::map(params$gVars$multi_ISSmsg,2)  %>% as.character(.)%>% unique(.) 
+  } 
+  
+  if (length(params$gVars$multi_ACmsg)>0){
+      arbiterAC <- purrr::map(params$gVars$multi_ACmsg,2)  %>% as.character(.)%>% unique(.) 
+  }   
+  
+  all_arbiters <- c(arbiterISS,arbiterAC) %>% unique(.) 
+  if(length(all_arbiters) >1 & any(is.na(all_arbiters))) {
+    all_arbiters <- all_arbiters[!is.na(all_arbiters)]
+    } 
+
+  all_arbiters_kbl <- kbl(all_arbiters, escape = FALSE, format="html", booktabs = TRUE, align=c("l","c"),
+                     col.names=NULL, row.names=TRUE) %>%
+                    kable_styling(bootstrap_options = c("striped", "condensed")) %>% column_spec(1, width = "30em")
+  } 
+                                
+
+```
+
+
+
+```{r, tables_integration_curation_analysis1MULTI, echo = FALSE, results='asis'}
+#print tables calculated in  previous block integration_curation_analysis" - such as the integration analysis of multiple datasets)
+if ( !params$gVars$working_status ) {  #multi 
+    
+    print(h2(title_curation_results))
+    if(total_processed_cols !=0){ 
+      print(h2("All Arbiters"))
+      cat(all_arbiters_kbl)
+        for (tables in multi_integration_analysis_list_tables)  {
+          cat(tables)
+        }
+    } else {
+      cat("The quality assessment of the integration of curated datasets has not been yet performed.") 
+      } 
+} 
+
+```
+
+
+```{r, tables_MSGconsistenMULTI, echo = FALSE, results='asis'}
+#print tables showing the entries classified as consistent in multi case
+if ( !params$gVars$working_status ) {  #multi 
+    if (length(params$gVars$multi_ACmsg)>0){
+        head_all_consistent <- as.data.frame(params$gVars$multi_ACmsg) %>% 
+                              do.call(rbind.data.frame, .)  %>% setNames(.,c("Consistent Entries", "Arbiter")) %>%      head(.)
+        
+        consistent_kbl <- kbl(head_all_consistent, escape = FALSE, format="html", booktabs = TRUE, align=c("l","c"),
+                           col.names=c("Consistent Entries", "Arbiter"), row.names=TRUE) %>%
+                          kable_styling(bootstrap_options = c("striped", "condensed"))
+        
+        print(h4("List of 'Consistent' entries"))
+        cat("The entries are listed in order of processing.")
+        cat(consistent_kbl) 
+    }
+  }
+
+```
+
+
+```{r, tables_MSGissueMULTI, echo = FALSE, results='asis'}
+#print tables showing the entries classified as consistent in multi case
+if ( !params$gVars$working_status ) {  #multi 
+    if (length(params$gVars$multi_ISSmsg)>0){
+        head_all_issue <- as.data.frame(params$gVars$multi_ISSmsg) %>% 
+                        do.call(rbind.data.frame, .)  %>% setNames(.,c("Entries to review", "Arbiter")) %>% head(.)
+        
+        issuesM_kbl <- kbl(head_all_issue, escape = FALSE, format="html", booktabs = TRUE, align=c("l","c"),
+                     col.names=c("Entries to review", "Arbiter"), row.names=FALSE) %>%
+                    kable_styling(bootstrap_options = c("striped", "condensed"))
+        
+        print(h4("List of the 'Issue' entries to re-evaluate"))
+        cat("
+Each block reports the tracking ID to link easily the correspondent step in the procedural report. 
+If absent, the missing IDs referred to a misclassified entry, operation later undone. <br>
+Below the ID, it is indicated the column name, the correspondent file and the entries contained in the file but not in the vocabulary. <br>
+In the remote case, where all the entries were already present in the vocabulary, but the user finds and mark as 'Issue' some inconsistency, the reporting block is slightly modified. The report is enriched by an explanatory note and the block lists only the filenames and not all the entries. <br>
+The messages are an extended version of those in the Procedures/GLP report, were the contents associated to the file name are not indicated.")
+        cat(issuesM_kbl) 
+    }
+  }
+
+```
+
+
+
+```{r, procedural_track_GLP_title, echo=FALSE, results='asis'}
+
+title_pt_GLP <- ifelse (!params$input$GLP_inactivation_mode, #GLP mode enabled
+                                "GLP Procedural Track", 
+                                "Procedural Track")
+h2(title_pt_GLP)
+```
+The procedural track can also downloaded as separate file.
+
+
+```{r, glp_pt, echo=FALSE, results='asis'}
+
+report_pt_glp <- params$gVars$pt_glp_list 
+    if (!"list" %in% class(report_pt_glp)){
+      list_pt_glp_list <- as.list(report_pt_glp)
+    }
+    to_print_glp_comment_rep <- as.data.frame(report_pt_glp) %>% do.call(rbind.data.frame, .)  %>% 
+          cbind(nstep=row.names(.), .)
+
+    steps <- (to_print_glp_comment_rep)   
+    if(!params$input$GLP_inactivation_mode){ #GLP mode enabled
+                               cols_title <-   c("Step ID", "Type of Operation and GLP Comment")
+                               } else{ 
+                                   cols_title <- c("Step ID", "Type of Operation")
+                                  }
+    glp_pt_kbl <- kbl(steps, escape = FALSE, format="html",booktabs = TRUE, align="l", 
+                        col.names = cols_title)   %>% 
+                        kable_styling (bootstrap_options = c("striped", "condensed")) 
+  
+cat(glp_pt_kbl)
+
+```

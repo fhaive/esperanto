@@ -1,3 +1,18 @@
+#' Read all sheets from an excel document
+#'
+#' @description 
+#' 'read_excel_allsheets' returns the content of the sheets of the excel file identified by the filepath in the arguments
+#' @param x A filepath to a xls or xlsx file
+#' @param y A flag whether convert output to dataframe
+#' @return A list or a dataframe
+#' @examples
+#' \dontrun{
+#' readxl::excel_sheets(filename)
+#' readxl::excel_sheets(filename, tibble=FALSE)
+#' }
+
+
+
 read_excel_allsheets <- function(filename, tibble = FALSE) {
   sheets <- readxl::excel_sheets(filename)
   x <- lapply(sheets, function(X){ 
@@ -5,24 +20,11 @@ read_excel_allsheets <- function(filename, tibble = FALSE) {
     y = readxl::read_excel(filename, sheet = X)
     
   }
-  #y = as.data.frame(y)
-  #y[,1] = as.character(as.vector(y[[1]]))   #
-  #rownames(y) = y[,1]                     #
-  #y = y[,-1]                             #
   )
-  #x <- lapply(x, function(k) k[-1])
   
   if(!tibble) x <- lapply(x, as.data.frame)
   names(x) <- sheets
   return(x)
   
 }
-
-# DF = read_excel_allsheets(filename = "../pheno_list.xlsx",tibble = FALSE)
-# Exp = read_excel_allsheets(filename = "../exp_mat_file.xlsx",tibble = FALSE)
-
-#dd1<-as.data.frame(data.table::rbindlist(d1))
-
-
-#filename=(paste0(getwd(),"/pre_POL LEN/Fin/Cura-app/cura_shinyapp/dict_sheets2.xlsx"))
-#d1<-read_excel_allsheets(filename, tibble=FALSE)
+ 
