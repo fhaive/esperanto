@@ -28,27 +28,5 @@ label_shortener <- function(label, n_char) {
          {substr(label, 1, n_char) %>% paste0(., "...")},
          label)
   label
-#  label <- as.character(label)
-#  processed_labels <- sapply (label, function (lbl) {
-    
-#    if(nchar(lbl) <= n_char ) {
-#          lbl
-#    } else{    #(nchar(label) > (n_char - 3)) 
-#          lbl <- substr(lbl, 1, n_char-10)  %>% paste0(., "...")
-#    } 
-#    lbl  
-    
-#  })
 
-  
-  
-  
-  
-   # if(nchar(label) <= n_char ) {
-#    label
-#    } else{    #(nchar(label) > (n_char - 3)) 
-#         label <- substr(label, 1, n_char)  %>% paste0(., "...")
-       
-#    }
-#  label
     }

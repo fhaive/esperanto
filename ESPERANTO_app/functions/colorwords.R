@@ -1,6 +1,6 @@
-#' Attributes a color to code whether and how the word is present in the reference vocabulary.  
+#' Attributes a color to code whether and how the word is present in the reference vocabulary.
 #'
-#' @description 
+#' @description
 #' 'colorwords' cross-compares the input string (word) and a reference vocabulary (dict_keys), attributing a specific color in relation to if and how the word is retrieved.
 #' The reference vocabulary is a dataframe where each row shows the following fields: "reference label", "label synonyms","reference content", "content synonyms".
 #' The output consists of a html string to color the word depending on whether it is present in the vocabulary: "Green" if it is stored as "reference label" or "reference content"; "Blue" if the word is a synonim of label or content; "Red" if it is absent.
@@ -8,10 +8,11 @@
 #' @param dict_keys A dataframe to use as reference vocabulary.
 #' @return  A html string.
 #' @examples
-#' \dontrun{ 
+#' \dontrun{
+#' library(magrittr)
 #' dict_keys <-rbind(
 #'               data.frame( label="sex" , lab_syn ="gender", allowed_features=c("M","F"), syn_features =c("Male,male","Female,female")  ) ,
-#'               data.frame( label="organism" , lab_syn =NA, allowed_features=c("Homo Sapiens","Mus Musculus"), syn_features =NA)) %>% 
+#'               data.frame( label="organism" , lab_syn =NA, allowed_features=c("Homo Sapiens","Mus Musculus"), syn_features =NA)) %>%
 #'               tidyr::separate_rows(.,c(syn_features))
 #' word_test1 <- "English"
 #' colorwords(word_test1, dict_keys)
@@ -39,10 +40,10 @@ colorwords <- function(word, dict_keys){
     font <- "red"
   }
   # Create html
-  formatedFont <- sprintf('<b><font color="%s">%s</font></b>',font,word) 
-  
+  formatedFont <- sprintf('<b><font color="%s">%s</font></b>',font,word)
+
   # Append to text to show
   outTxt <- c(paste(outTxt, formatedFont,collapse=' '))
-  
+
   outTxt
   }
