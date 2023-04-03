@@ -28,15 +28,15 @@ library(shinydashboard)
 library(shinyFeedback)
 
 #Get source directory
-source("functions/read_excel_allsheets.R")
-source("functions/column_label_finder.R")
-source("functions/duplicate_finder.R")
-source("functions/single_col_recode_finder.R")
-source("functions/colorwords.R")
-source("functions/convert_df_to_dict.R")
-source("functions/convert_dict_to_df.R") 
-source("functions/label_shortener.R")
-source("functions/undo_related_funcs.R")
+source("ESPERANTO_app/functions/read_excel_allsheets.R")
+source("ESPERANTO_app/functions/column_label_finder.R")
+source("ESPERANTO_app/functions/duplicate_finder.R")
+source("ESPERANTO_app/functions/single_col_recode_finder.R")
+source("ESPERANTO_app/functions/colorwords.R")
+source("ESPERANTO_app/functions/convert_df_to_dict.R")
+source("ESPERANTO_app/functions/convert_dict_to_df.R") 
+source("ESPERANTO_app/functions/label_shortener.R")
+source("ESPERANTO_app/functions/undo_related_funcs.R")
 
 
 
@@ -729,7 +729,7 @@ server<-(function(input, output, session) {
     phTable <- gVars$inputPh()[[1]]
     colNames <- list("unch"=NULL,"usu"=NULL)
     
-    always <- scan("./files/always.txt", character(), quote = "", skip=1)
+    always <- scan("./ESPERANTO_app/files/always.txt", character(), quote = "", skip=1)
     gVars$always <- always
     colnamesdf <- colnames(phTable)
     colnamesdf_always <- which(colnamesdf %in% always)
@@ -4727,7 +4727,7 @@ server<-(function(input, output, session) {
       return(NULL)
     
     #import always - contains typical colnames in metadata which are not of interest in curation
-    always <- scan("./files/always.txt", character(), quote = "", skip=1)
+    always <- scan("./ESPERANTO_app/files/always.txt", character(), quote = "", skip=1)
     gVars$always <- always
     
     output$multifiles <- DT::renderDT({
