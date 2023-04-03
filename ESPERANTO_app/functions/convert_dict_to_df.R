@@ -1,4 +1,4 @@
-#' Convert a collections::dict object (key:value) input into a list containing the compact and the extended dataframe version of the resulting updated vocabulary.
+#' Convert a collections::dict object (key:value) input into a list containing the list of updated vocabularies dataframes.
 
 #' @description
 #' 'convert_dict_to_df' takes as input (new_OBJdict) a collections::dict object (key:value), such as an intermediate updated version of the original reference vocabulary, and converts it into a list of two vocabulary dataframes, equivalent in the entries, but structured in a compact and extended version.
