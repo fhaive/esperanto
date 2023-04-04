@@ -4256,7 +4256,7 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("./report/report_multi_issue.Rmd") 
+      tempReport <- paste0("ESPERANTO_app/report/report_multi_issue.Rmd") 
       file.copy("report_multi_issue.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
@@ -4291,7 +4291,7 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("./report/report_multi_issue.Rmd") 
+      tempReport <- paste0("ESPERANTO_app/report/report_multi_issue.Rmd") 
       file.copy("report_multi_issue.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
@@ -4328,7 +4328,7 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("./report/report_multi_consistent.Rmd") 
+      tempReport <- paste0("ESPERANTO_app/report/report_multi_consistent.Rmd") 
       file.copy("report_multi_consistent.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
@@ -4367,7 +4367,7 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("./report/report_multi_consistent.Rmd") 
+      tempReport <- paste0("ESPERANTO_app/report/report_multi_consistent.Rmd") 
       file.copy("report_multi_consistent.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document

@@ -33,7 +33,6 @@
 
 
 convert_dict_to_df <- function(new_OBJdict){
-  browser()
   # melt the dict object in properly strucutred dataframe and substitutes NA string and "" with NA
   new_dict <- reshape2::melt(new_OBJdict$as_list(), value.name = "syn_features")
   compact_new_dict <- new_dict %>%
