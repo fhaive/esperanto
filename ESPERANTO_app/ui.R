@@ -199,7 +199,7 @@ ui <- function(request) {
                                                            )
                                                            
                                                            
-                                                        #   ,downloadButton("exportRpt_singlebtn", "Only_Analysis_Rpt"), actionBttn("brow","brow")
+                                                          # ,downloadButton("exportRpt_singlebtn", "Only_Analysis_Rpt"), actionBttn("brow","brow")
                                                            
                                                            
                                                     )
@@ -207,13 +207,13 @@ ui <- function(request) {
                                   ),
                                   bsCollapsePanel("MORE INFO", style="sample",
                                                   fluidRow(
-                                                    HTML(" <a style=color:blue;  target=\"_blank\"; href=\"https://github.com/Greco-Lab/BMDx\">GitHub</a>")
+                                                    HTML(" <a style=color:blue;   href=\"https://github.com/fhaive/esperanto\">GitHub</a>")
                                                   ),
                                                   fluidRow(
-                                                    HTML("<a style=color:blue; target=\"_blank\";  href=\"Manual.pdf\">Manual</a>")
+                                                    HTML("<a style=color:blue;  href=\"https://github.com/fhaive/esperanto/wiki/ESPERANTO-User-Guide\">Manual</a>")
                                                   ),
                                                   fluidRow(
-                                                    HTML("<a style=color:blue;  target=\"_blank\"; href=\"https://github.com/Greco-Lab/BMDx/blob/master/pheno_list_2_exp_4_TP.xlsx\">Sample phenodata</a>")
+                                                    HTML("<a style=color:blue;   href=\"https://github.com/fhaive/esperanto/tree/master/sample_data\">Sample phenodata</a>")
                                                   )
                                   )
                        )
@@ -312,9 +312,7 @@ ui <- function(request) {
                            ), #chius column
                            column(6,                 
                                   tabItem(tabName = "Duplicate_candidate_removal",
-                                          #helpText(paste("If possible, the suggestion is to prioritize keeping columns with names labelled according the allowed labels reported in the vocabulary.")),
-                                          #fluidRow(
-                                          #  column(width = 6,
+                                          
                                           uiOutput('radioDUPL'), #x<-etc uioutp
                                           
                                           div(style="display: inline-block; vertical-align:center; horizontal-align:left; margin-right:200px", 
@@ -643,8 +641,7 @@ ui <- function(request) {
                            
                            
                            navbarPage("", id="navlist_specialOPS", collapsible=TRUE,
-                                      tabPanel(id="agilent_button", "Agilent",
-                                               
+                                      tabPanel(id="agilent_button", "Agilent", 
                                                fluidRow(column(12, align="left",
                                                                tabItem(tabName = "agilent_function_box",
                                                                        fluidRow(column(4,align="left",
@@ -774,7 +771,7 @@ ui <- function(request) {
                  ")),
                                                    
                                                    fixedRow(
-                                                     column(5, align="left",
+                                                     column(5, align="left",  
                                                             radioGroupButtons(
                                                               inputId = "type_of_splitter",
                                                               label = "Splitting method",

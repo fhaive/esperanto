@@ -395,16 +395,16 @@ server<-(function(input, output, session) {
     lapply(names(previous_session_gVars), function(k) {
       gVars[[k]] <- previous_session_gVars[[k]]
     })  
+    
     Load_done <- showNotification(paste("Message:", "The session has been restored"), duration = NULL)
     
-    
     # fix sidebar buttons
-    if(!gVars$GLP_status) { 
-      shinyBS::updateButton(session, "GLP_inactivation_mode", label= " GLP Mode Enabled",  style="success", icon=icon("check-circle"))#, disabled = !input$GLP_inactivation_mode)
+    if(!gVars$GLP_status ) { 
+      shinyBS::updateButton(session, "GLP_inactivation_mode", label= " GLP Mode Enabled",  style="success", icon=icon("check-circle")) 
       shinyBS::updateCollapse(session, "bsSidebar1", close="STRUCTURE HOMOGENIZATION", style=list("GLP MODE"="success"))
     }
     if(!is.null(gVars$phTable[[1]]) |!is.null(gVars$multidf) ){
-      shinyBS::updateButton(session, "import_pheno_submit", style="success", icon=icon("check-circle"))
+      shinyBS::updateButton(session, "import_pheno_submit", style="success", icon=icon("check-circle"), disabled=TRUE)
       shinyBS::updateCollapse(session, "bsSidebar1", close="LOAD VOCABULARY", style=list("LOAD PHENODATA"="success"))
     }
     
@@ -575,7 +575,6 @@ server<-(function(input, output, session) {
   
   
   observeEvent(input$GLP_inactivation_mode, {
-    
     if (!input$GLP_inactivation_mode){     #GLP mode active
       gVars$pt_glp_list <- c(gVars$pt_glp_list, "GLP mode enabled") 
       shinyBS::updateButton(session, "GLP_inactivation_mode", label= " GLP Mode Enabled",  style="success", icon=icon("check-circle"))
@@ -586,10 +585,20 @@ server<-(function(input, output, session) {
       gVars$pt_glp_list <- c(gVars$pt_glp_list, "GLP mode disabled") 
       shinyBS::updateButton(session, "GLP_inactivation_mode", label=" GLP Mode Disabled",  style="danger", icon=icon("exclamation-circle"))
       shinyBS::updateCollapse(session, "bsSidebar1", close="STRUCTURE HOMOGENIZATION", style=list("GLP MODE"="warning","STRUCTURE HOMOGENIZATION"="warning"))
-      gVars$GLP_status <- TRUE
+      gVars$GLP_status <- TRUE 
     }    
     
   })
+  
+  
+  observeEvent(input$import_session, {
+    req(!is.null(gVars$GLP_status))
+   if (!gVars$GLP_status){     #GLP mode active
+      click("GLP_inactivation_mode")
+    }
+ 
+  })
+  
   
   
   
@@ -861,7 +870,7 @@ server<-(function(input, output, session) {
   observeEvent ( c(input$save_recoding, input$reject_full_recoding, 
                    input$step_submit_del, input$save_agil_button, input$add_Fempty_cols_button,
                    input$run_separ, input$run_separ_regex ),{
-                     req(!is.null(gVars$working_status))
+                     req(!is.null(gVars$working_status)) 
                      shinyBS::updateButton(session, "relabelling_block_button", disabled = TRUE)
                      shinyBS::updateButton(session, "dupl_removal_block_button", disabled = TRUE)
                    })
@@ -879,7 +888,7 @@ server<-(function(input, output, session) {
   observeEvent (c(input$accept_lab_candidate, input$reject_lab_candidate, input$save_recoding, input$reject_full_recoding,
                   input$step_submit_del, input$save_agil_button, input$add_Fempty_cols_button, 
                   input$run_separ, input$run_separ_regex
-  ),{
+  ),{ 
     req(!is.null(gVars$working_status))
     shinyjs::disable ("bsSidebar0_5")
   })          
@@ -905,7 +914,7 @@ server<-(function(input, output, session) {
   # enable, disable alternative content homogenization options, if the third is selected
   # step_choice = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3)
   #keep "1"(delete of "step_choice" radiocont enabled and it disables 2(modify/save) and 3(specials) radiobutton options 
-  observeEvent(input$step_submit_del, {
+  observeEvent(input$step_submit_del, { 
     req(!is.null(gVars$phTable))
     shinyjs::enable(selector = "#step_choice [type=radio][value =1 ]")
     shinyjs::runjs("$('#step_choice [type=radio][value =1]').parent().addClass('enabled').css('opacity', 1)")
@@ -940,11 +949,10 @@ server<-(function(input, output, session) {
   
   observeEvent(c(input$step_choice, input$pick_cols_recoding),{
     req(!is.null(gVars$phTable))
-    req(!is.null(input$pick_cols_recoding))
+    req(!is.null(input$pick_cols_recoding)) 
     if(identical(input$pick_cols_recoding,"")){
       disable("step_submit_del")
       disable("step_submit")
-      disable("step_submit_spec")
     } else {
       enable("step_submit_del")
       enable("step_submit")
@@ -1048,12 +1056,9 @@ server<-(function(input, output, session) {
       gVars$relab_op_list <- c(gVars$relab_op_list, (list(relab_RJ =relab_RJ)))
       gVars$last5list <- c(gVars$last5list, (list(relab_RJ =relab_RJ)))
       
-      
-      #perform rejection action
-      #gVars$processedL <- c(gVars$processedL,chosen_match)
+      #perform rejection action 
       gVars$tmpLr <- chosen_match
-      temp <- data$fnCOL_LAB_FINDER
-      #    data$fnCOL_LAB_FINDER <- temp[!temp$match %in% chosen_match,]  
+      temp <- data$fnCOL_LAB_FINDER 
     }
     
     
@@ -1076,13 +1081,14 @@ server<-(function(input, output, session) {
   
   #by pressing add/glp button, it reupdates all the buttons and perform the relabelling/or not
   observeEvent(input$glp_pt_button_relab, {
-    if(!input$GLP_inactivation_mode){    #such as GLPmode activated
+    if(!gVars$GLP_status){    #such as GLPmode activated 
       showModal(dataModal())
       disable("undo_relab_button")
     } else { # only procedural track report
       # re-update buttons 
       shinyBS::updateButton(session, "accept_lab_candidate", style="info")
       shinyBS::updateButton(session, "reject_lab_candidate", style="info")
+      shinyBS::updateButton(session, "glp_pt_button_relab", disabled=TRUE)
       enable("accept_lab_candidate")
       enable("reject_lab_candidate")
       enable("undo_relab_button")
@@ -1117,11 +1123,13 @@ server<-(function(input, output, session) {
       if (failed){
         div(br(),tags$b("In GLP mode, you must justify your decisions. Please do."), style = "color: red;")},
       
-      footer =  modalButton("Cancel")
+      footer =  NULL#modalButton("Cancel")
     )
   }
   
-  
+  observeEvent(input$testami,{
+    browser()
+  })
   
   # When Add button(glp_store_comment) is pressed, it tests if the textareainput box is not empty. 
   # If successful, remove the modal, otherwise it shows another modal with a failure message.
@@ -1131,13 +1139,183 @@ server<-(function(input, output, session) {
       tabulated_comment <- paste0("\t","COMMENT: ",input$glp_comments_box)
       list_elem <- list(tabulated_comment)
       gVars$pt_glp_list <- c(gVars$pt_glp_list, list_elem)
-      removeModal()
+      removeModal()  
+      if (!is.null(input$step_choice)){
+          if (input$step_choice == 1) {
+            shinyjs::delay(200, toggleModal(session, "modalstep1", "close"))
+          } else if (input$step_choice == 2) {
+            shinyjs::delay(200, toggleModal(session, "modalstep", "close"))
+            shinyBS::updateButton(session, "save_recoding", style="info", disabled=FALSE)
+            shinyBS::updateButton(session, "reject_full_recoding", style="info", disabled=FALSE)
+            
+            updateRadioButtons(session, "store_labels", 
+                               choices = list("as Label Synonym" = 1, "Do not store"=2), 
+                               selected = character(0))
+            
+            updateRadioButtons(session, "store_contents",
+                               choices = list("as Content Synonym" = 3, "Do not store"=4),
+                               selected = character(0))
+            
+            shinyBS::updateButton(session, "store_button", style="info", disabled=TRUE)
+            
+            shinyBS::updateButton(session, "glp_pt_button_rec", disabled=TRUE)
+          } else if (input$step_choice == 3) {
+                shinyjs::delay(200, toggleModal(session, "SpecialOPmodal", toggle="close"))
+                if (input$navlist_specialOPS %in% "Agilent") {
+                  updateSelectizeInput(session,
+                                       inputId = "pick_cols_recoding",
+                                       #gVars$list_cols_tmp options present before",
+                                       choices = c(gVars$list_cols_tmp, "gsm", "slide", "array"),
+                                       selected = character(0),
+                                       server=TRUE)
+                  updateButton(session,  "glp_pt_button_split",disabled = TRUE)
+                  updateButton(session,  "test_agil_button",disabled = FALSE)
+                  updateButton(session,  "save_agil_button", style="info", disabled = TRUE)
+                  updateButton(session,  "glp_pt_button_AGIsplit", style="info", disabled = TRUE) 
+                  
+                  output$pt_AGIsplit <- renderText({"<i><small>Waiting for action!</small></i>"})
+                  gVars$support_for_correction <- NULL
+                
+              }else if (input$navlist_specialOPS %in% "Adding empty columns") {
+                  updateSelectizeInput(session,
+                                       inputId = "pick_cols_recoding",
+                                       #gVars$list_cols_tmp options present before",
+                                       choices = c(gVars$list_cols_tmp, gVars$tmp_new_names[[1]]),
+                                       selected = character(0),
+                                       server=TRUE)
+                  
+                  updateNumericInput(session,inputId = "new_cols", label= HTML("Column(s) to add"), min=0, value=0) 
+                  updateTextInput(session, inputId = "names_added_cols","Name new column(s)", value="")
+                  updateButton(session,  "add_Fempty_cols_button", style="info",disabled = FALSE)
+                  updateButton(session,  "glp_pt_button_addEmpty", style="info",disabled = TRUE)
+                  output$pt_addEmpty <- renderText({"<i><small>Waiting for action!</small></i>"})
+                  gVars$support_for_correction <- NULL
+               } else if (input$navlist_specialOPS %in% "Splitting column") {
+                     #Separator and common
+                     updateSelectizeInput(session,
+                                          inputId = "pick_cols_recoding",
+                                          #gVars$list_cols_tmp options present before",
+                                          choices = c(gVars$list_cols_tmp, gVars$tmp_new_names),
+                                          selected = character(0),
+                                          server=TRUE) 
+                     updateCheckboxInput(session, "other_col_split", "Select manually another specific column", value = FALSE)
+                     
+                     updateButton(session,  "glp_pt_button_split",disabled = TRUE)
+                     updateButton(session,  "reset_test_table",disabled = TRUE)
+                     updateButton(session,  "run_separ",disabled = TRUE,style="info") 
+                     updateButton(session,  "test_separ",disabled = TRUE)
+                     
+                     output$test_splitted_cols <-NULL
+                     updateTextAreaInput(session, inputId="PT_store_split", "Procedural track", value = "Waiting for action!")  
+                     
+                     updateSelectizeInput(session,
+                                          inputId = "type_of_separator", 
+                                          choices = c("Tab", ",", ";", "Space","", "Other"), 
+                                          selected = character(0),
+                                          server=TRUE)
+                     updateTextInput(session,inputId="other_sep",  value= character(0))
+                     updateTextInput(session,inputId="names_split_cols",  value= character(0))
+                     updateCheckboxInput(session, "name_splitted_cols",  value = FALSE)
+                     updateSelectizeInput(session,inputId = "select_col_df_SPLIT",   selected = character(0), #multiple = FALSE,
+                                          options = list(
+                                            placeholder= "columns from loaded dataframe", onInitialize = I('function() { this.setValue(""); }')),
+                                          server=TRUE)
+                     updateRadioGroupButtons( session,
+                                              inputId = "type_of_splitter",
+                                              label = "Splitting method",
+                                              choices = c("Separator", "Regular Expression"),
+                                              selected=character(0),
+                                              status = "radioGROUPclass", 
+                                              checkIcon = list(
+                                                yes = icon("check-square"),
+                                                no = icon("square-o") #("fas fa-square-o")
+                                              ))
+                     gVars$dt_split <- NULL
+                     gVars$support_for_correction <- NULL
+                     
+                     #regular expression
+                     updateButton(session,  "reset_test_table_regex",disabled = TRUE)
+                     updateButton(session,  "run_separ_regex",disabled = TRUE,style="info") 
+                     updateButton(session,  "test_separ_regex",disabled = TRUE)
+                     
+                     updateTextInput(session,inputId="regex_splitting",  value= character(0))
+                     
+                     updateTextInput(session,inputId="names_split_cols_regex",  value= character(0))
+                     
+                     
+              }else{return()}
+            
+           } else { return ()}
+        
+      shinyBS::updateButton(session, "undo_save_button", style="info", disabled=FALSE)
+      updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3)  , selected = character(0), inline=TRUE)
+      
+      }  
     } else {
       showModal(dataModal(failed = TRUE))
     }
     
   })
+
   
+  
+  #reste all elelemnts in the "specials" window, every time the specials next is pressed
+  observeEvent(input$step_submit_spec, { 
+    req(isTruthy(input$pick_cols_recoding) | isTruthy(input$other_col_split))
+    req(is.null(gVars$support_for_correction))
+    updateButton(session,  "glp_pt_button_split",disabled = TRUE)
+      
+    updateButton(session,  "test_agil_button",disabled = FALSE)
+    updateButton(session,  "save_agil_button", style="info", disabled = TRUE)
+    updateButton(session,  "glp_pt_button_AGIsplit", style="info", disabled = TRUE) 
+    gVars$agi_splitted_new_cols <- NULL
+    output$pt_AGIsplit <- renderText({"<i><small>Waiting for action!</small></i>"})
+      
+    updateNumericInput(session,inputId = "new_cols", label= HTML("Column(s) to add"), min=0, value=0) 
+    updateTextInput(session, inputId = "names_added_cols","Name new column(s)", value="")
+    updateButton(session,  "add_Fempty_cols_button", style="info",disabled = FALSE)
+    updateButton(session,  "glp_pt_button_addEmpty", style="info",disabled = TRUE)
+    output$pt_addEmpty <- renderText({"<i><small>Waiting for action!</small></i>"})
+    
+    updateCheckboxInput(session, "other_col_split", "Select manually another specific column", value = FALSE)
+    updateButton(session,  "glp_pt_button_split",disabled = TRUE)
+    updateButton(session,  "reset_test_table",disabled = TRUE)
+    updateButton(session,  "run_separ",disabled = TRUE,style="info") 
+    updateButton(session,  "test_separ",disabled = TRUE)
+    output$test_splitted_cols <-NULL
+    updateTextAreaInput(session, inputId="PT_store_split", "Procedural track", value = "Waiting for action!")  
+    updateSelectizeInput(session,
+                           inputId = "type_of_separator", 
+                           choices = c("Tab", ",", ";", "Space","", "Other"), 
+                           selected = character(0),
+                           server=TRUE)
+    updateTextInput(session,inputId="other_sep",  value= character(0))
+    updateTextInput(session,inputId="names_split_cols",  value= character(0))
+    updateCheckboxInput(session, "name_splitted_cols",  value = FALSE)
+    updateSelectizeInput(session,inputId = "select_col_df_SPLIT",   selected = character(0), #multiple = FALSE,
+                           options = list(
+                             placeholder= "columns from loaded dataframe", onInitialize = I('function() { this.setValue(""); }')),
+                           server=TRUE)
+    updateRadioGroupButtons( session,
+                               inputId = "type_of_splitter",
+                               label = "Splitting method",
+                               choices = c("Separator", "Regular Expression"),
+                               selected=character(0),
+                               status = "radioGROUPclass", 
+                               checkIcon = list(
+                                 yes = icon("check-square"),
+                                 no = icon("square-o") #("fas fa-square-o")
+                               ))
+    gVars$dt_split <- NULL
+      
+    updateButton(session,  "reset_test_table_regex",disabled = TRUE)
+    updateButton(session,  "run_separ_regex",disabled = TRUE,style="info") 
+    updateButton(session,  "test_separ_regex",disabled = TRUE)
+    updateTextInput(session,inputId="regex_splitting",  value= character(0))
+    updateTextInput(session,inputId="names_split_cols_regex",  value= character(0))
+    
+  })
+    
   
   
   #update of all buttons and perform the cleaning if needed of data boxes i.e. the selected column
@@ -1145,7 +1323,7 @@ server<-(function(input, output, session) {
     req(input$glp_comments_box != "")
     
     
-    if(req(input$pick_col_labelling!="")){ #&& data$current_col_candidate_label != " ")){  
+    if(req(input$pick_col_labelling!="")){  
       # re-update buttons 
       shinyBS::updateButton(session, "accept_lab_candidate", style="info")
       shinyBS::updateButton(session, "reject_lab_candidate", style="info")
@@ -1244,7 +1422,7 @@ server<-(function(input, output, session) {
   
   # undo buttons  
   observeEvent(input$undo_relab_button | input$undo_dupl_button | input$undo_del_button | input$undo_save_button |  
-                 input$undo_agil_button | input$undo_norm_regex_split_button | input$undo_addEmpty  | input$undo_multi_button,{  
+                 input$undo_agil_button | input$undo_addEmpty  | input$undo_multi_button,{  
                    req(!is.null(gVars$pt_glp_list))
                    req(!is.na(gVars$pt_glp_list))
                    #stores undo 
@@ -1516,7 +1694,7 @@ server<-(function(input, output, session) {
     gVars$phTable[[1]] <- gVars$tmpdf
     
     shinyBS::updateButton(session, "submit", style="info")
-    shinyBS::updateButton(session, "glp_pt_button_dupl", style="info")
+    shinyBS::updateButton(session, "glp_pt_button_dupl", style="info", disabled=TRUE)
     
     #storing for undostep
     dupl_AC <- list( choice,df[,potential_choices] )
@@ -1933,11 +2111,11 @@ server<-(function(input, output, session) {
     shinyBS::updateButton(session, "glp_pt_button_rec_del", disabled=TRUE)
     shinyBS::updateButton(session, "undo_save_button", disabled=FALSE) 
     output$pt_recod_del_msg <- renderText({"<i><small>Waiting for action!</small></i>"})
-    updateRadioButtons(session, "step_choice", choices= c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3)  , selected = character(0), inline=TRUE) 
     
     if(!input$GLP_inactivation_mode){    #such as GLPmode activated
-      showModal(dataModal())
+      showModal(dataModal()) 
     } else {
+      updateRadioButtons(session, "step_choice", choices= c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3)  , selected = character(0), inline=TRUE) 
       shinyjs::delay(500, toggleModal(session, "modalstep1", "close"))
     }
     
@@ -1947,7 +2125,7 @@ server<-(function(input, output, session) {
   
   
   
-  observeEvent(      input$step_submit,{
+  observeEvent(      input$step_submit,{ 
     df <- data.frame(gVars$phTable[[1]])
     choice <- as.character((input$step_choice))
     gVars$skip_marker <- FALSE
@@ -2309,7 +2487,7 @@ server<-(function(input, output, session) {
       gVars$processedLIST2REC <- c(gVars$processedLIST2REC,new_colname)  
     }
     
-    if (data$nrow_upd_fnSING_COL_RECODE_FINDER ==1) {     #update123
+    if (data$nrow_upd_fnSING_COL_RECODE_FINDER ==1) {     
       gVars$processed_cols_RECOD <- c( gVars$processed_cols_RECOD, input$recoded_label)
     }
     
@@ -2726,7 +2904,7 @@ server<-(function(input, output, session) {
       
       if (failed){
         div(br(),tags$b("In GLP mode, you must justify your decisions. Please do."), style = "color: red;")},
-      footer =  modalButton("Cancel")
+      footer =  NULL#modalButton("Cancel")
       
     )
   }
@@ -3163,11 +3341,6 @@ server<-(function(input, output, session) {
     enable("undo_save_button")
     if(!input$GLP_inactivation_mode){    #such as GLPmode activated
       showModal(dataModal())
-      
-      observeEvent(input$glp_store_comment, {
-        updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3)  , selected = character(0), inline=TRUE)
-        toggleModal(session, "modalstep", "close")
-      })
     } 
     else{
       #reupdate buttons and menus
@@ -3186,8 +3359,7 @@ server<-(function(input, output, session) {
                          selected = character(0))
       
       
-      shinyBS::updateButton(session, "store_button", style="info", disabled=TRUE)
-      shinyBS::updateButton(session, "undo_upd_button", style="info", disabled=TRUE)
+      shinyBS::updateButton(session, "store_button", style="info", disabled=TRUE) 
       shinyBS::updateButton(session, "glp_pt_button_rec", disabled=TRUE)
       updateRadioButtons(session, "step_choice",   choices= c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
       
@@ -3214,28 +3386,45 @@ server<-(function(input, output, session) {
   
   
   observeEvent(input$test_agil_button,{
-    req(!is.null(input$pick_cols_recoding))
+    if(!isTruthy(input$pick_cols_recoding)){
+      shinyjs::info("Please select a column in the previous window!")
+      return (NULL)
+    }
+    req(isTruthy(input$pick_cols_recoding))
     current_df <- gVars$phTable[[1]]
     tmp_selected_col <- current_df[,input$pick_cols_recoding]
     
     gsm = sapply(tmp_selected_col, function(x) substr(x,0,regexpr('_', x)[1]-1))
     slide = sapply(tmp_selected_col, function(x) substr(x,regexpr('_', x)[1] + 1, regexpr('_S',x)[1] - 1))
     array = sapply(tmp_selected_col, function(x) substr(x,regexpr('_[1-4]_', x)[1]+1, regexpr('_[1-4]\\.txt',x)[1]+1))
+    
     gVars$agi_splitted_new_cols <- data.frame(gsm=gsm, slide=slide, array=array)
     
-    updateButton(session,  "save_agil_button",disabled = FALSE)
-    updateButton(session,  "test_agil_button",style="success",disabled = FALSE)
-    updateButton(session,  "reset_agitest_table",disabled = FALSE)
+    new_colnames <- c("gsm", "slide", "array")
+    if(is.null(gVars$support_for_correction) && any(colnames(gVars$phTable[[1]]) %in% new_colnames) ) {  
+      shinyjs::info(paste0("The indicated names of newly splitted columns are already present in the dataset (", toString(new_colnames[new_colnames %in% colnames(gVars$phTable[[1]])]) ,"). Please change!"))
+      return (NULL)
+    } 
     
-    gVars$AGIsplit_msg <- paste0("Column '",input$pick_cols_recoding, "' was splitted into 'gsm', 'slide' and 'array'. ")
-    output$pt_AGIsplit <- renderText({"..."})
+    if(any(gVars$agi_splitted_new_cols!="")){ 
+      updateButton(session,  "save_agil_button",disabled = FALSE)
+      updateButton(session,  "test_agil_button",style="success",disabled = FALSE)
+      updateButton(session,  "reset_agitest_table",disabled = FALSE)
+        
+      gVars$AGIsplit_msg <- paste0("Column '",input$pick_cols_recoding, "' was splitted into 'gsm', 'slide' and 'array'. ")
+      output$pt_AGIsplit <- renderText({"..."})
+    }
   })
   
   
   output$table_AGI_splitted_cols <- renderDataTable({
-    req(!is.null(input$pick_cols_recoding))
+    req(isTruthy(input$pick_cols_recoding))
     req(!is_empty(gVars$agi_splitted_new_cols))
     cols_toshow <- as.data.frame(gVars$agi_splitted_new_cols)
+    if(all(cols_toshow=="")) { 
+      col_toshow <- NULL
+      return (NULL)
+    }
     DT::datatable(
       cols_toshow, selection="none",options =list(scrollX=TRUE,dom="t"))
   })
@@ -3243,18 +3432,21 @@ server<-(function(input, output, session) {
   
   
   #reset test table
-  observeEvent(input$reset_agitest_table,{
-    output$table_AGI_splitted_cols <-NULL
+  observeEvent(input$reset_agitest_table,{ 
+    output$table_AGI_splitted_cols <-renderDataTable({NULL})
+    updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
     updateButton(session,  "reset_agitest_table",disabled = TRUE)
     updateButton(session,  "save_agil_button", style="info", disabled = TRUE)
-    updateButton(session,  "test_agil_button",style="info",disabled = FALSE)
+    updateButton(session,  "test_agil_button",style="info",disabled = TRUE)
     
   })
   
   
   observeEvent(input$save_agil_button,{
     req(input$pick_cols_recoding)
+    req(any(gVars$agi_splitted_new_cols!=""))
     gVars$phTable[[1]] <- cbind(gVars$phTable[[1]],gVars$agi_splitted_new_cols)
+    gVars$support_for_correction <- "action_done"
     
     #storing stage for undostep
     special_agiSPL <- list( input$pick_cols_recoding,colnames(gVars$agi_splitted_new_cols) )
@@ -3275,27 +3467,39 @@ server<-(function(input, output, session) {
   
   
   observeEvent(input$glp_pt_button_AGIsplit,{
-    
     gVars$pt_glp_list <- c(gVars$pt_glp_list, gVars$AGIsplit_msg)
-    updateSelectizeInput(session,
-                         inputId = "pick_cols_recoding",
-                         #gVars$list_cols_tmp options present before",
-                         choices = c(gVars$list_cols_tmp, "gsm", "slide", "array"),
-                         selected = character(0),
-                         server=TRUE)
-    updateButton(session,  "glp_pt_button_split",disabled = TRUE)
-    updateButton(session,  "test_agil_button",disabled = FALSE)
-    updateButton(session,  "save_agil_button", style="info", disabled = TRUE)
-    updateButton(session,  "glp_pt_button_AGIsplit", style="info", disabled = TRUE)
-    updateButton(session, "undo_save_button", disabled=FALSE) 
-    
-    output$pt_AGIsplit <- renderText({"<i><small>Waiting for action!</small></i>"})
-    updateRadioButtons(session, "step_choice",    choices= c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
-    
     if(!input$GLP_inactivation_mode){    #such as GLPmode activated
       showModal(dataModal())
+    } else{
+          updateSelectizeInput(session,
+                               inputId = "pick_cols_recoding",
+                               #gVars$list_cols_tmp options present before",
+                               choices = c(gVars$list_cols_tmp, "gsm", "slide", "array"),
+                               selected = character(0),
+                               server=TRUE)
+          updateButton(session,  "glp_pt_button_split",disabled = TRUE)
+          updateButton(session,  "test_agil_button",disabled = FALSE)
+          updateButton(session,  "save_agil_button", style="info", disabled = TRUE)
+          updateButton(session,  "glp_pt_button_AGIsplit", style="info", disabled = TRUE)
+          updateButton(session, "undo_save_button", disabled=FALSE) 
+          gVars$support_for_correction <- NULL
+          
+          output$pt_AGIsplit <- renderText({"<i><small>Waiting for action!</small></i>"})
+          updateRadioButtons(session, "step_choice",    choices= c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
     }
   })
+  
+  
+  observe({
+    if (!input$GLP_inactivation_mode) {    #GLP enabled
+      shinyBS::updateButton(session, "glp_pt_button_AGIsplit", label=" GLP", style="info")
+      shinyBS::addTooltip(session,"glp_pt_button_AGIsplit", "Launch a graphical window, to enrich the procedural track info with comments according to GLP regulations.", placement="bottom")
+    } else {
+      shinyBS::updateButton(session, "glp_pt_button_AGIsplit", label=" Add", style="info")
+      shinyBS::removeTooltip(session,"glp_pt_button_AGIsplit") 
+    }
+  })
+  
   
   
   
@@ -3345,6 +3549,11 @@ server<-(function(input, output, session) {
       shinyjs::info("The number of newly added column(s) and entered column names do not match. Please check!")
       return(NULL)
     }
+    #check if new names are already present
+    if(any(colnames(gVars$phTable[[1]]) %in% new_names) ) {
+      shinyjs::info(paste0("One or more of the names indicated to rename the new columns is already present in the dataset (", toString(new_names[new_names %in% colnames(gVars$phTable[[1]])]) ,"). Please change!"))
+      return(NULL)
+    }
     
     #adds the cols  
     new_names <- unlist(strsplit(input$names_added_cols,","))
@@ -3357,7 +3566,7 @@ server<-(function(input, output, session) {
     }
     current_df[,new_names] <- NA
     gVars$phTable[[1]] <- current_df
-    
+    gVars$support_for_correction <- "action_done"
     
     #storing stage for undostep
     special_addEMPTY <- gVars$tmp_new_names <- list(new_names )
@@ -3378,25 +3587,42 @@ server<-(function(input, output, session) {
   observeEvent(input$glp_pt_button_addEmpty,{
     gVars$pt_glp_list <- c(gVars$pt_glp_list, gVars$addEmpty_msg) 
     gVars$list_cols_tmp <- c(gVars$list_cols_tmp,gVars$tmp_new_names[[1]] )
-    updateSelectizeInput(session,
-                         inputId = "pick_cols_recoding",
-                         #gVars$list_cols_tmp options present before",
-                         choices = c(gVars$list_cols_tmp, gVars$tmp_new_names[[1]]),
-                         selected = character(0),
-                         server=TRUE)
-    
-    output$pt_AGIsplit <- renderText({"<i><small>Waiting for action!</small></i>"})
-    updateNumericInput(session,inputId = "new_cols", label= HTML("Column(s) to add"), min=0, value=0) 
-    updateTextInput(session, inputId = "names_added_cols","Name new column(s)", value="")
-    updateButton(session,  "add_Fempty_cols_button", style="info",disabled = FALSE)
-    updateButton(session, "undo_save_button", disabled=FALSE) 
-    updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
-    output$pt_addEmpty <- renderText({"<i><small>Waiting for action!</small></i>"})
-    
     if(!input$GLP_inactivation_mode){    #such as GLPmode activated
       showModal(dataModal())
+    } else{
+        updateSelectizeInput(session,
+                             inputId = "pick_cols_recoding",
+                             #gVars$list_cols_tmp options present before",
+                             choices = c(gVars$list_cols_tmp, gVars$tmp_new_names[[1]]),
+                             selected = character(0),
+                             server=TRUE)
+        
+        output$pt_AGIsplit <- renderText({"<i><small>Waiting for action!</small></i>"})
+        updateNumericInput(session,inputId = "new_cols", label= HTML("Column(s) to add"), min=0, value=0) 
+        updateTextInput(session, inputId = "names_added_cols","Name new column(s)", value="")
+        updateButton(session,  "add_Fempty_cols_button", style="info",disabled = FALSE)
+        updateButton(session,  "glp_pt_button_addEmpty", style="info",disabled = TRUE)
+        updateButton(session, "undo_save_button", disabled=FALSE) 
+        updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
+        output$pt_addEmpty <- renderText({"<i><small>Waiting for action!</small></i>"})
+        gVars$support_for_correction <- NULL
+    }
+    
+  })
+  
+  
+  observe({
+    if (!input$GLP_inactivation_mode) {    #GLP enabled
+      shinyBS::updateButton(session, "glp_pt_button_addEmpty", label=" GLP", style="info")
+      shinyBS::addTooltip(session,"glp_pt_button_addEmpty", "Launch a graphical window, to enrich the procedural track info with comments according to GLP regulations.", placement="bottom")
+    } else {
+      shinyBS::updateButton(session, "glp_pt_button_addEmpty", label=" Add", style="info")
+      shinyBS::removeTooltip(session,"glp_pt_button_addEmpty") 
     }
   })
+  
+  
+  
   
   
   observeEvent(input$undo_addEmpty,{
@@ -3442,18 +3668,18 @@ server<-(function(input, output, session) {
   output$test_colname_to_showSPLIT <- renderText("Newly splitted columns")
   
   observeEvent(input$test_separ,{
+    req(isTruthy(input$pick_cols_recoding) | isTruthy(input$select_col_df_SPLIT))
     updateButton(session,  "reset_test_table",disabled = FALSE)
     updateButton(session,  "run_separ",disabled = FALSE)
     updateTextAreaInput(session, inputId="PT_store_split", "Procedural track", value = "...")
     
     output$test_splitted_cols <- renderDataTable({
-      req(input$type_of_separator,gVars$sel_col_split)
+      req(!is.null(input$type_of_separator),!is.null(gVars$sel_col_split)) 
       col_to_split <- gVars$sel_col_split
       test_table <- data.frame(gVars$phTable[[1]] [,col_to_split])
       colnames(test_table) <-col_to_split
       sep <- gVars$separatorChar
       test_table <- splitstackshape::cSplit(test_table, col_to_split, sep=sep)
-      
       if(input$name_splitted_cols ==TRUE){
         new_colnames <- unlist(strsplit(input$names_split_cols, ","))
         if (length(new_colnames) == ncol(test_table)){
@@ -3461,8 +3687,14 @@ server<-(function(input, output, session) {
         } else {
           shinyjs::info("The number of newly splitted columns and entered column names do not match. Please check!")
         }
+        if(is.null(gVars$support_for_correction) && any(colnames(gVars$phTable[[1]]) %in% new_colnames) ) {
+          shinyjs::info(paste0("The indicated names of newly splitted columns are already present in the dataset (", toString(new_colnames[new_colnames %in% colnames(gVars$phTable[[1]])]) ,"). Please change!"))
+          test_table <-  NULL 
+          return (NULL)
+        } 
+        
       }
-      
+      req(!is.null( test_table))
       gVars$dt_split = test_table 
       DT::datatable(
         test_table, selection="none",options =list(scrollX=TRUE))
@@ -3473,18 +3705,37 @@ server<-(function(input, output, session) {
   
   
   #reset test table
-  observeEvent(input$reset_test_table,{
+  observeEvent(c(input$reset_test_table,input$reset_test_table_regex),{
     output$test_splitted_cols <-NULL
     updateButton(session,  "reset_test_table",disabled = TRUE)
     updateButton(session,  "run_separ", style="info", disabled = TRUE)
     updateButton(session,  "test_separ",style="info",disabled=FALSE)
+    updateSelectizeInput(session,
+                         inputId = "type_of_separator", 
+                         choices = c("Tab", ",", ";", "Space","", "Other"), 
+                         selected = character(0),
+                         server=TRUE)
+    updateTextInput(session,inputId="other_sep",  value= character(0))
+    updateTextInput(session,inputId="names_split_cols",  value= character(0))
+    updateCheckboxInput(session, "name_splitted_cols",  value = FALSE)
+    updateRadioGroupButtons( session,
+                             inputId = "type_of_splitter",
+                             label = "Splitting method",
+                             choices = c("Separator", "Regular Expression"),
+                             selected=character(0),
+                             status = "radioGROUPclass", 
+                             checkIcon = list(
+                               yes = icon("check-square"),
+                               no = icon("square-o") #("fas fa-square-o")
+                             ))
     
   })
   
   
   
   observeEvent(input$run_separ,{
-    req(!is_empty(gVars$dt_split))
+    req(!is.null(gVars$dt_split))
+    req(!is_empty(gVars$dt_split) )
     updateButton(session,  "reset_test_table",disabled = TRUE)
     updateButton(session,  "run_separ",style="success") 
     updateButton(session,  "test_separ",disabled = TRUE)
@@ -3492,6 +3743,7 @@ server<-(function(input, output, session) {
     
     gVars$phTable[[1]]<- cbind(gVars$phTable[[1]],gVars$dt_split)
     gVars$tmp_new_names <- colnames(gVars$dt_split)
+    gVars$support_for_correction <- "action_done"
     
     #storing stage for undostep
     special_SPL <- list(input$pick_cols_recoding, colnames(gVars$dt_split))
@@ -3557,20 +3809,39 @@ server<-(function(input, output, session) {
   })
   
   
+  observeEvent(input$glp_pt_button_split,{
+    req(!is.null(gVars$phTable[[1]] ))
+    req(isTruthy(input$glp_pt_button_split)) 
+    if (isTRUE(gVars$GLP_status)){
+        updateRadioGroupButtons( session,
+                                 inputId = "type_of_splitter",
+                                 label = "Splitting method",
+                                 choices = c("Separator", "Regular Expression"),
+                                 selected=character(0),
+                                 status = "radioGROUPclass", 
+                                 checkIcon = list(
+                                   yes = icon("check-square"),
+                                   no = icon("square-o") #("fas fa-square-o")
+                                 ))
+      }
+  })
+  
+  
   #if manual is ticked/unticked - resets the values downflow
   observeEvent(input$other_col_split,{
     req(!is.null(gVars$phTable[[1]] ))
-    updateRadioGroupButtons( session,
-                             inputId = "type_of_splitter",
-                             label = "Splitting method",
-                             choices = c("Separator", "Regular Expression"),
-                             selected=character(0),
-                             status = "radioGROUPclass", 
-                             checkIcon = list(
-                               yes = icon("check-square"),
-                               no = icon("square-o") #("fas fa-square-o")
-                             ))
-    
+    if (isTRUE(gVars$GLP_status)){
+      updateRadioGroupButtons( session,
+                               inputId = "type_of_splitter",
+                               label = "Splitting method",
+                               choices = c("Separator", "Regular Expression"),
+                               selected=character(0),
+                               status = "radioGROUPclass", 
+                               checkIcon = list(
+                                 yes = icon("check-square"),
+                                 no = icon("square-o") #("fas fa-square-o")
+                               ))
+  }  
     gVars$sel_col_split <-NULL   #remove the selected shown column table
   })
   
@@ -3580,6 +3851,7 @@ server<-(function(input, output, session) {
     input$run_separ
     input$run_separ_regex
     req(!is_empty(gVars$sel_col_split))
+    req(!is.null(gVars$dt_split))
     if(!is.null(gVars$sel_col_split)){
       num_spl_cols <- ncol(gVars$dt_split)
       return( paste0("Column '",gVars$sel_col_split, "' is splitted into ", num_spl_cols, " columns" ))
@@ -3619,40 +3891,12 @@ server<-(function(input, output, session) {
   })    
   
   
-  observeEvent(input$glp_pt_button_split,{
-    req(input$type_of_splitter == "Separator")
-    gVars$pt_glp_list <- c(gVars$pt_glp_list, input$PT_store_split)
-    gVars$list_cols_tmp <- c(gVars$list_cols_tmp,gVars$tmp_new_names )
-    updateSelectizeInput(session,
-                         inputId = "pick_cols_recoding",
-                         #gVars$list_cols_tmp options present before",
-                         choices = c(gVars$list_cols_tmp, gVars$tmp_new_names),
-                         selected = character(0),
-                         server=TRUE)
-    updateCheckboxInput(session, "other_col_split", "Select manually another specific column", value = T)
-    updateCheckboxInput(session, "other_col_split", "Select manually another specific column", value = FALSE)
-    
-    updateButton(session,  "glp_pt_button_split",disabled = TRUE)
-    updateButton(session,  "reset_test_table",disabled = TRUE)
-    updateButton(session,  "run_separ",disabled = TRUE,style="info", icon=icon("check-circle")) 
-    updateButton(session,  "test_separ",disabled = TRUE)
-    updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
-    
-    output$test_splitted_cols <-NULL
-    updateTextAreaInput(session, inputId="PT_store_split", "Procedural track", value = "Waiting for action!")
-    updateButton(session,  "undo_norm_regex_split_button",disabled = FALSE)
-    updateButton(session, "undo_save_button", disabled=FALSE) 
-    
-    if(!input$GLP_inactivation_mode){    #such as GLPmode activated
-      showModal(dataModal())
-    }
-  })
   
+                
   
   
   #undo for both regex and normal splitting part
-  observeEvent(input$undo_agil_button,{
-    updateButton(session,  "undo_norm_regex_split_button",disabled = TRUE)
+  observeEvent(input$undo_agil_button,{ 
     #cleaning of the tables
     output$test_splitted_cols <-NULL
     output$col_to_showSPLIT <-NULL
@@ -3664,6 +3908,7 @@ server<-(function(input, output, session) {
   
   #REGEXP
   observeEvent(input$test_separ_regex,{
+    req(isTruthy(input$pick_cols_recoding) | isTruthy(input$select_col_df_SPLIT))
     updateButton(session,  "reset_test_table_regex",disabled = FALSE)
     updateButton(session,  "run_separ_regex",disabled = FALSE)
     updateTextAreaInput(session, inputId="PT_store_split", "Procedural track", value = "...")
@@ -3677,9 +3922,17 @@ server<-(function(input, output, session) {
       sep <- input$regex_splitting
       test_table <- tidyr::extract(test_table, col_to_split, into=newcolnames, sep)
       
+      if(is.null(gVars$support_for_correction) && any(colnames(gVars$phTable[[1]]) %in% newcolnames) ) {
+          shinyjs::info(paste0("The indicated names of newly splitted columns are already present in the dataset (", toString(newcolnames[newcolnames %in% colnames(gVars$phTable[[1]])]) ,"). Please change!"))
+          test_table <-  NULL
+          return (NULL)
+      }
+          
+      req(!is.null(test_table))
       gVars$dt_split <- test_table 
       DT::datatable(
-        test_table, selection="none",options =list(scrollX=TRUE))
+            test_table, selection="none",options =list(scrollX=TRUE))
+      
     })
     
   })
@@ -3687,17 +3940,22 @@ server<-(function(input, output, session) {
   
   
   #reset test table
-  observeEvent(input$reset_test_table_regex,{
+  observeEvent(c(input$reset_test_table,input$reset_test_table_regex),{
     output$test_splitted_cols <-NULL
     updateButton(session,  "reset_test_table_regex",disabled = TRUE)
     
     updateButton(session,  "run_separ_regex", style="info", disabled = TRUE)
     updateButton(session,  "test_separ_regex",style="info",disabled=FALSE)
+    
+    updateTextInput(session,inputId="regex_splitting",  value= character(0))
+    updateTextInput(session,inputId="names_split_cols_regex",  value= character(0)) 
+    gVars$dt_split <-NULL
   })
   
   
-  observeEvent(input$run_separ_regex,{
-    req(!is_empty(gVars$dt_split))
+  observeEvent(input$run_separ_regex,{ 
+    req(!is.null(gVars$dt_split))
+    req(!is_empty(gVars$dt_split) )
     updateButton(session,  "reset_test_table_regex",disabled = TRUE)
     updateButton(session,  "run_separ_regex",style="success") 
     updateButton(session,  "test_separ_regex",disabled = TRUE)
@@ -3705,6 +3963,7 @@ server<-(function(input, output, session) {
     
     gVars$phTable[[1]]<- cbind(gVars$phTable[[1]],gVars$dt_split)
     gVars$tmp_new_names <- colnames(gVars$dt_split)
+    gVars$support_for_correction <- "action_done"
     
     #storing stage for undostep
     special_SPLREG <- list(input$pick_cols_recoding,colnames(gVars$dt_split))
@@ -3767,30 +4026,69 @@ server<-(function(input, output, session) {
   })
   
   
+  #for both "Separator" and "Regular Expression"
   observeEvent(input$glp_pt_button_split,{
-    req(input$type_of_splitter == "Regular Expression")
-    gVars$list_cols_tmp <- c(gVars$list_cols_tmp,gVars$tmp_new_names )
-    updateSelectizeInput(session,
-                         inputId = "pick_cols_recoding",
-                         #gVars$list_cols_tmp options present before",
-                         choices = c(gVars$list_cols_tmp, gVars$tmp_new_names),
-                         selected = character(0),
-                         server=TRUE)
     gVars$pt_glp_list <- c(gVars$pt_glp_list, input$PT_store_split) 
-    updateCheckboxInput(session, "other_col_split", "Select manually another specific column", value = TRUE)
-    updateCheckboxInput(session, "other_col_split", "Select manually another specific column", value = FALSE)
-    updateButton(session,  "glp_pt_button_split",disabled = TRUE)
-    updateButton(session,  "reset_test_table_regex",disabled = TRUE)
-    updateButton(session,  "run_separ_regex",disabled = TRUE,style="info", icon=icon("check-circle")) 
-    updateButton(session,  "test_separ_regex",disabled = TRUE)
-    updateButton(session, "undo_save_button", disabled=FALSE) 
-    output$test_splitted_cols <-NULL
-    updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3)  , selected = character(0), inline=TRUE)
-    updateTextAreaInput(session, inputId="PT_store_split", "Procedural track", value = "Waiting for action!")
-    
+    gVars$list_cols_tmp <- c(gVars$list_cols_tmp,gVars$tmp_new_names )
     if(!input$GLP_inactivation_mode){    #such as GLPmode activated
       showModal(dataModal())
+    } else{
+        #Separator and common
+      updateSelectizeInput(session,
+                           inputId = "pick_cols_recoding",
+                           #gVars$list_cols_tmp options present before",
+                           choices = c(gVars$list_cols_tmp, gVars$tmp_new_names),
+                           selected = character(0),
+                           server=TRUE) 
+      updateCheckboxInput(session, "other_col_split", "Select manually another specific column", value = FALSE)
+      
+      updateButton(session,  "glp_pt_button_split",disabled = TRUE)
+      updateButton(session,  "reset_test_table",disabled = TRUE)
+      updateButton(session,  "run_separ",disabled = TRUE,style="info") 
+      updateButton(session,  "test_separ",disabled = TRUE)
+      updateRadioButtons(session, "step_choice",    choices = c("Delete" = 1, "Modify and/or Save" = 2, "Specials" =3) , selected = character(0), inline=TRUE)
+      
+      output$test_splitted_cols <-NULL
+      updateTextAreaInput(session, inputId="PT_store_split", "Procedural track", value = "Waiting for action!") 
+      updateButton(session, "undo_save_button", disabled=FALSE) 
+      
+      updateSelectizeInput(session,
+                           inputId = "type_of_separator", 
+                           choices = c("Tab", ",", ";", "Space","", "Other"), 
+                           selected = character(0),
+                           server=TRUE)
+      updateTextInput(session,inputId="other_sep",  value= character(0))
+      updateTextInput(session,inputId="names_split_cols",  value= character(0))
+      updateCheckboxInput(session, "name_splitted_cols",  value = FALSE)
+      updateSelectizeInput(session,inputId = "select_col_df_SPLIT",   selected = character(0), #multiple = FALSE,
+                           options = list(
+                             placeholder= "columns from loaded dataframe", onInitialize = I('function() { this.setValue(""); }')),
+                           server=TRUE)
+      updateRadioGroupButtons( session,
+                               inputId = "type_of_splitter",
+                               label = "Splitting method",
+                               choices = c("Separator", "Regular Expression"),
+                               selected=character(0),
+                               status = "radioGROUPclass", 
+                               checkIcon = list(
+                                 yes = icon("check-square"),
+                                 no = icon("square-o") #("fas fa-square-o")
+                               ))
+      gVars$dt_split <- NULL
+      gVars$support_for_correction <- NULL
+      
+       #regular expression
+        updateButton(session,  "reset_test_table_regex",disabled = TRUE)
+        updateButton(session,  "run_separ_regex",disabled = TRUE,style="info") 
+        updateButton(session,  "test_separ_regex",disabled = TRUE)
+        
+        updateTextInput(session,inputId="regex_splitting",  value= character(0))
+        
+        updateTextInput(session,inputId="names_split_cols_regex",  value= character(0))
+        
     }
+    
+    
   })
   
   
@@ -4175,7 +4473,7 @@ server<-(function(input, output, session) {
       oldw <- getOption("warn")
       options(warn = -1)
       tempReport <- file.path((tempdir()), "report_PT_GLP.Rmd")
-      file.copy("report_PT_GLP.Rmd", tempReport, overwrite=TRUE)
+      file.copy("ESPERANTO_app/report/report_PT_GLP.Rmd", tempReport, overwrite=TRUE)
       
       
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -4211,7 +4509,7 @@ server<-(function(input, output, session) {
       oldw <- getOption("warn")
       options(warn = -1)
       tempReport <- file.path((tempdir()), "report_PT_GLP.Rmd")
-      file.copy("report_PT_GLP.Rmd", tempReport, overwrite=TRUE)
+      file.copy("ESPERANTO_app/report/report_PT_GLP.Rmd", tempReport, overwrite=TRUE)
       
       
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -4256,8 +4554,8 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("ESPERANTO_app/report/report_multi_issue.Rmd") 
-      file.copy("report_multi_issue.Rmd", tempReport, overwrite = TRUE)
+      tempReport <- file.path((tempdir()),"report_multi_issue.Rmd") 
+      file.copy("ESPERANTO_app/report/report_multi_issue.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -4291,8 +4589,8 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("ESPERANTO_app/report/report_multi_issue.Rmd") 
-      file.copy("report_multi_issue.Rmd", tempReport, overwrite = TRUE)
+      tempReport <- file.path((tempdir()), "report_multi_issue.Rmd") 
+      file.copy("ESPERANTO_app/report/report_multi_issue.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -4328,8 +4626,8 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("ESPERANTO_app/report/report_multi_consistent.Rmd") 
-      file.copy("report_multi_consistent.Rmd", tempReport, overwrite = TRUE)
+      tempReport <- file.path((tempdir()), "report_multi_consistent.Rmd") 
+      file.copy("ESPERANTO_app/report/report_multi_consistent.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -4367,8 +4665,8 @@ server<-(function(input, output, session) {
         shinyjs::hide(id="loading-content", anim=TRUE, animType="fade")    
       })
       
-      tempReport <- paste0("ESPERANTO_app/report/report_multi_consistent.Rmd") 
-      file.copy("report_multi_consistent.Rmd", tempReport, overwrite = TRUE)
+      tempReport <- file.path((tempdir()), "report_multi_consistent.Rmd") 
+      file.copy("ESPERANTO_app/report/report_multi_consistent.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -4759,6 +5057,7 @@ server<-(function(input, output, session) {
   
   observeEvent(input$go_to_multi_tool_integ_button,{
     req(length(gVars$multidf_list)!=0)
+    shiyjs::disable("import_pheno_submit")
     gVars$multidf <- as_tibble(do.call(plyr::rbind.fill,gVars$multidf_list)) %>% dplyr::select(mainfile_name, everything())
     
     gVars$sha256_stringID <- digest::digest(gVars$current_df_file_name, "sha256")
@@ -5239,7 +5538,7 @@ server<-(function(input, output, session) {
       }
       
       #adds the comment to the complete procedural track
-      gVars$pt_glp_list <- c(gVars$pt_glp_list, list_element)
+      gVars$pt_glp_list <- c(gVars$pt_glp_list, tabulated_comment)
       
       removeModal() 
     } else {
@@ -5401,9 +5700,6 @@ server<-(function(input, output, session) {
   })
   
   
-  
-  
-  observeEvent(input$brow, {  browser()  })
   
   # update coloursof the second block of buttons according to the presence of data stored
   output$css_checkbox <- renderUI({ 
@@ -5779,7 +6075,8 @@ server<-(function(input, output, session) {
   })
   
   
-  observeEvent(input$reset_window_reports,{  
+  observeEvent(c(input$reset_window_reports, input$showFinalDownload),{  
+    req(!is.null(gVars$working_status))
     enable("download_single_rpt")
     enable("download_multi_rpt")
     closeSweetAlert(session)
@@ -5956,7 +6253,7 @@ server<-(function(input, output, session) {
       oldw <- getOption("warn")
       options(warn = -1)
       tempReport <- file.path((tempdir()), "report.Rmd")
-      file.copy("report.Rmd", tempReport, overwrite=TRUE)
+      file.copy("ESPERANTO_app/report/report.Rmd", tempReport, overwrite=TRUE)
       
       
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -5994,7 +6291,7 @@ server<-(function(input, output, session) {
       oldw <- getOption("warn")
       options(warn = -1)
       tempReport <- file.path((tempdir()), "report_PT_GLP.Rmd")
-      file.copy("report_PT_GLP.Rmd", tempReport, overwrite=TRUE)
+      file.copy("ESPERANTO_app/report/report_PT_GLP.Rmd", tempReport, overwrite=TRUE)
       
       
       params <- list(gVars=gVars, input=input, srcDir=srcDir)
@@ -6210,7 +6507,7 @@ server<-(function(input, output, session) {
       oldw <- getOption("warn")
       options(warn = -1)
       tempReport <- file.path((tempdir()), "report.Rmd")
-      file.copy("report.Rmd", tempReport, overwrite=TRUE)
+      file.copy("ESPERANTO_app/report/report.Rmd", tempReport, overwrite=TRUE)
       
       
       params <- list(gVars=gVars, input=input, srcDir=srcDir)

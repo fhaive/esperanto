@@ -22,7 +22,7 @@
 
 
 # it finds the column of the dataset named by label synonyms that should be renamed with the allowed label.
-column_label_finder <- function(dict_keys, single_df){
+column_label_finder <- function(dict_keys, single_df){ 
   name_col <- colnames(single_df)
   t<-c()
   LABEL_matchedDs_DiSYN <- c()
@@ -32,6 +32,7 @@ column_label_finder <- function(dict_keys, single_df){
   #controlla che ci siano match tra dict e dataset label synonim. T contains the datset colname to relabel.
   ngrams <- unique(c(dict_keys$lab_syn))
   patternDICT <- paste(ngrams, collapse = "|")    # only synonyms
+  if (length(ngrams)==1 && ngrams %in% "*fillertoremove*") { return ()}
   t<-unique(stringr::str_extract(name_col, patternDICT))   # matching colnames with voc. synonyms
   t<-t[!t %in% "NA"]
   t<-t[!is.na(t)]
@@ -39,7 +40,8 @@ column_label_finder <- function(dict_keys, single_df){
 
   len<-length(t)
   if (len==0){
-    print("NO MATCH")}
+    print("NO MATCH")
+    return() }
   else{
       #find a vocabulary reference label vs the the synonym got by match dict-dataset
 
