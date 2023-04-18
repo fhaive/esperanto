@@ -89,22 +89,14 @@ If packages based on rJava (i.e. rlang) are not installed correctly, the user sh
 remove.packages(”rJava”)    
 ```
 
-If the error holds after the update/install of Java, it is probably originated by rJava and Java using different versions (i.e 32 vs 64 bits). In this case, the solution is to install the same Java version and update manually the Java path with the new Java version: i.e, version jre1.8.0_121 (64-bits).     
+If the error holds after the update/install of Java, it is probably originated by rJava and Java using different versions (i.e 32 vs 64 bits). In this case, the solution is to install the same Java version and update manually the Java path with the new Java version: i.e, version jre1.8.0_121 (64-bits).
+</div>      
+
 ```     
 Sys.setenv(JAVA_HOME='C:/Program Files/Java/jre1.8.0_121')    
-```      
-</div>   
+```
 
-### option 1. Run ESPERANTO from GitHub      
-```    
-# Load 'shiny' library
-  library(shiny)
-  library(shinyjs)
-# run on the host port 8787 (or any other port you want to map on your system)
-  runGitHub("esperanto", "fhaive", subdir= "ESPERANTO_app)     
-```     
-
-### option 2. Run ESPERANTO locally     
+### Run ESPERANTO locally     
 ```    
 # Clone the git repository
   git clone https://github.com/fhaive/esperanto ESPERANTOclone
