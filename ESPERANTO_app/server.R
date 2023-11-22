@@ -5057,7 +5057,7 @@ server<-(function(input, output, session) {
   
   observeEvent(input$go_to_multi_tool_integ_button,{
     req(length(gVars$multidf_list)!=0)
-    shiyjs::disable("import_pheno_submit")
+    shinyjs::disable("import_pheno_submit")
     gVars$multidf <- as_tibble(do.call(plyr::rbind.fill,gVars$multidf_list)) %>% dplyr::select(mainfile_name, everything())
     
     gVars$sha256_stringID <- digest::digest(gVars$current_df_file_name, "sha256")
