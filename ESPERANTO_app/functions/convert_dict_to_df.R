@@ -40,7 +40,7 @@ convert_dict_to_df <- function(new_OBJdict){
     separate(L2, c("lab_syn","allowed_features"), sep="\\_\\**\\_",extra="merge") %>%
     .[,c("label", "lab_syn", "allowed_features", "syn_features")] %>%
     mutate(across(everything(), ~na_if(., "NA")),
-                      across(everything(), ~na_if(., "")))
+                      across(everything(), ~na_if(., ""))) %>%.[order(.$label),]
     
   extended_new_dict <- compact_new_dict %>% separate_rows(.,lab_syn,sep="\\|")  %>%
                             separate_rows(.,allowed_features,sep="\\,") %>%   .[!duplicated(.),]
