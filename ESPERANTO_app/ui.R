@@ -23,7 +23,7 @@ library(shinyalert)
 library(shinyFeedback)
 library(knitr)
 library(kableExtra)
-
+library(splitstackshape)
 
 appCSS <- "
 //.modal-lg {
