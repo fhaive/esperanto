@@ -789,7 +789,7 @@ ui <- function(request) {
                                                             bsModal(id = "modal-info_splitting", title = "Information about splitting column cell content", trigger = "link_info_splitting",
                                                                     h5("This window allows to split the content of the selected column by means of a separator or a regular expression."), 
                                                                     div(style = "margin-top: 20px"),
-                                                                    h5("The option based on separator is more suitable for simple splitting, while regular expression offers more complex solutions."),
+                                                                    h5("The option based on separator is more suitable for simple splitting, while regular expression offers more complex solutions. The regular expression splitting is based on tidyr::extract() function."),
                                                                     div(style = "margin-top: -10px"),
                                                                     h5("Due to the higher complexity, the user has the possibility to test if the set regular expression works properly before effectively modify the data and save the result.")
                                                             ), 
