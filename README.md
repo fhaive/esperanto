@@ -9,7 +9,9 @@
 ESPERANTO is a tool developed in R Shiny that enables a standardised semi-supervised harmonisation and integration of toxicogenomics metadata and increases their FAIRness (Findable, Accessible, Interoperable and Reusable) in a Good Laboratory Practice (GLP)-compliant fashion. Biological data repositories are an invaluable source of publicly available research evidence. Unfortunately, the lack of convergence of the scientific community on a common metadata annotation strategy has resulted in large amounts of data with poor FAIRness.      <br /> 
 An experienced human curator is not repleaceable at the moment, hence the goal of ESPERANTO is to semi automatise the curation process, involving the user during the process.      <br />
 The graphical interface is designed to support the user in metadata harmonisation in a user-friendly manner, regardless of the level of expertise and the background.     <br />
-At last, ESPERANTO tracks each performed modification in a detailed GLP-compliant report, ensuring the reconstruction of the whole pipeline behind the curation of reliable, reproducible, and high-quality data.       
+At last, ESPERANTO tracks each performed modification in a detailed GLP-compliant report, ensuring the reconstruction of the whole pipeline behind the curation of reliable, reproducible, and high-quality data.     <br />
+  <br />
+Article available here [ESPERANTO: a GLP-field sEmi-SuPERvised toxicogenomics metadAta curatioN TOol](https://academic.oup.com/bioinformatics/article/39/6/btad405/7206881).    
 </div>             
        
  <br />     
@@ -44,7 +46,8 @@ shinyjs 2.1.0
 shinyBS 0.61.1   
 shinyalert 3.0.0    
 shinyFeedback 0.4.0    
-shinydashboard 0.7.2     
+shinydashboard 0.7.2 
+splitstackshape 1.4.8    
 rhandsontable 0.3.8    
 <br />    
 
