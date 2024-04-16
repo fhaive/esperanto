@@ -11,7 +11,7 @@ An experienced human curator is not repleaceable at the moment, hence the goal o
 The graphical interface is designed to support the user in metadata harmonisation in a user-friendly manner, regardless of the level of expertise and the background.     <br />
 At last, ESPERANTO tracks each performed modification in a detailed GLP-compliant report, ensuring the reconstruction of the whole pipeline behind the curation of reliable, reproducible, and high-quality data.     <br />
   <br />
-Article available here [ESPERANTO: a GLP-field sEmi-SuPERvised toxicogenomics metadAta curatioN TOol](https://academic.oup.com/bioinformatics/article/39/6/btad405/7206881).    
+Article available at https://academic.oup.com/bioinformatics/article/39/6/btad405/7206881     
 </div>             
        
  <br />     
