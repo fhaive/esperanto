@@ -20,7 +20,7 @@ library(shiny)
 library(shinyjs)
 library(shinyBS)
 library(shinyalert)
-
+library(splitstackshape)
 library(knitr)
 library(kableExtra)
 library(rhandsontable)
