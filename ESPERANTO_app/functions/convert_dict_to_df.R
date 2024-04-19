@@ -49,6 +49,7 @@ convert_dict_to_df <- function(new_OBJdict){
                                           lapply(., function(k) {paste(unique(k), collapse = "|") }) %>%
                                           as.character(.)
   extended_new_dict <- extended_new_dict %>% dplyr::mutate( syn_features = dplyr::na_if(syn_features,"NA"))
+  extended_new_dict <- extended_new_dict %>% .[!duplicated(.[, c("label", "lab_syn", "allowed_features")])& !is.na("syn_features"), ]
   voc_NEWversions <- list(compact_new_dict, extended_new_dict)
   voc_NEWversions
 
