@@ -117,3 +117,7 @@ The folder "[sample_data](https://github.com/fhaive/esperanto/tree/master/sample
 The whole set of files (inputs and saved intermediate sessions) as well as the generated reports and outcomes of the case study are available in "[case_study_files](https://github.com/fhaive/esperanto/tree/master/case_study_files)" repository.
 
 For detailed information about the use of ESPERANTO, please refer to the [user guide](https://github.com/fhaive/esperanto/wiki/ESPERANTO-User-Guide) provided.
+
+## License
+ESPERANTO is published under a GNU GENERAL PUBLIC LICENSE Version 3 license. Individual parts may underly a differet license, for this please refer to the package providers.
+
